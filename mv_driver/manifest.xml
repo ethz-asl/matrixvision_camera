@@ -1,0 +1,19 @@
+<package>
+  <description brief="mv_driver">
+
+     Wrapper for Matrix Vision mvBlueFOX and mvBlueCOUGAR drivers. It downloads the drivers, unpacks them, and exports the required compile and linker flags.  
+
+  </description>
+  <author>Markus Achtelik</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/mv_driver</url>
+  
+  <export>
+    <cpp cflags="`cat ${prefix}/compile_flags`" lflags="`cat ${prefix}/linker_paths` -lmvDeviceManager"/>
+  </export>
+
+</package>
+
+
+
