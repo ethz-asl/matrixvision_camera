@@ -38,7 +38,7 @@
 #include <string>
 #include <mvIMPACT_CPP/mvIMPACT_acquire.h>
 
-namespace matrix_vision_camera{
+namespace mv_camera{
 
 std::string pixelFormat(const mvIMPACT::acquire::TImageBufferPixelFormat &format);
 
@@ -48,6 +48,6 @@ mvIMPACT::acquire::TImageDestinationPixelFormat pixelFormat(const std::string &f
 
 std::string bayerString(const mvIMPACT::acquire::TBayerMosaicParity &pattern, unsigned int bits);
 
-}; // end namespace matrix_vision_camera
+}; // end namespace mv_camera
 
 #endif /* FORMATS_H_ */

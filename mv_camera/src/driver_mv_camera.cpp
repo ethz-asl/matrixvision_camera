@@ -38,11 +38,11 @@
 #include <driver_base/SensorLevels.h>
 #include <tf/transform_listener.h>
 
-#include "driver_matrix_vision_camera.h"
-#include "matrix_vision_camera/MatrixVisionCameraConfig.h"
+#include "driver_mv_camera.h"
+#include "mv_camera/MVCameraConfig.h"
 #include "features.h"
 
-#include "matrix_vision_camera/propertyMap.h"
+#include "mv_camera/propertyMap.h"
 #include "propertyMapInterface.h"
 
 /** @file
@@ -87,20 +87,20 @@ StringPropMap::iterator find_ignore_case(StringPropMap& m, const string& s)
   return find_if(m.begin(), m.end(), key_lcase_equal(s));
 }
 
-namespace matrix_vision_camera_driver
+namespace mv_camera_driver
 {
 // some convenience typedefs
-typedef matrix_vision_camera::MatrixVisionCameraConfig Config;
+typedef mv_camera::MVCameraConfig Config;
 typedef driver_base::Driver Driver;
 typedef driver_base::SensorLevels Levels;
 
-MatrixVisionCameraDriver::MatrixVisionCameraDriver(ros::NodeHandle priv_nh, ros::NodeHandle camera_nh) :
+MVCameraDriver::MVCameraDriver(ros::NodeHandle priv_nh, ros::NodeHandle camera_nh) :
     state_(Driver::CLOSED),
     reconfiguring_(false),
     priv_nh_(priv_nh),
     camera_nh_(camera_nh),
     camera_name_("camera"),
-    dev_(new matrix_vision_camera::MatrixVisionCamera()),
+    dev_(new mv_camera::MVCamera()),
     srv_(priv_nh),
     cycle_(1.0),            // slow poll when closed
     cinfo_(new camera_info_manager::CameraInfoManager(camera_nh_)), calibration_matches_(true),
@@ -108,14 +108,14 @@ MatrixVisionCameraDriver::MatrixVisionCameraDriver(ros::NodeHandle priv_nh, ros:
 {
 
   // publish service:
-  serviceServer_ = camera_nh_.advertiseService("pollPropertyList", &MatrixVisionCameraDriver::pollPropertyMapCallback,
+  serviceServer_ = camera_nh_.advertiseService("pollPropertyList", &MVCameraDriver::pollPropertyMapCallback,
                                                this);
   cout << camera_name_ << endl << endl;
   continuousPoll_ = true;
 
 }
 
-MatrixVisionCameraDriver::~MatrixVisionCameraDriver()
+MVCameraDriver::~MVCameraDriver()
 {
 }
 
@@ -123,7 +123,7 @@ MatrixVisionCameraDriver::~MatrixVisionCameraDriver()
  *
  *  postcondition: state_ is Driver::CLOSED
  */
-void MatrixVisionCameraDriver::closeCamera()
+void MVCameraDriver::closeCamera()
 {
   if (state_ != Driver::CLOSED)
   {
@@ -134,7 +134,7 @@ void MatrixVisionCameraDriver::closeCamera()
 }
 
 // mvIMPACT SDK Examples
-std::string MatrixVisionCameraDriver::getPropertyData(const mvIMPACT::acquire::Property& prop)
+std::string MVCameraDriver::getPropertyData(const mvIMPACT::acquire::Property& prop)
 //-----------------------------------------------------------------------------
 {
 
@@ -220,8 +220,8 @@ std::string MatrixVisionCameraDriver::getPropertyData(const mvIMPACT::acquire::P
 }
 // \mvIMPACT SDK Examples
 
-bool MatrixVisionCameraDriver::pollPropertyMapCallback(matrix_vision_camera::propertyMap::Request &req,
-                                                       matrix_vision_camera::propertyMap::Response &res)
+bool MVCameraDriver::pollPropertyMapCallback(mv_camera::propertyMap::Request &req,
+                                                       mv_camera::propertyMap::Response &res)
 {
 
   // parse commands
@@ -453,7 +453,7 @@ bool MatrixVisionCameraDriver::pollPropertyMapCallback(matrix_vision_camera::pro
  *   state_ is Driver::OPENED
  *   camera_name_ set to GUID string
  */
-bool MatrixVisionCameraDriver::openCamera(Config &newconfig)
+bool MVCameraDriver::openCamera(Config &newconfig)
 {
   bool success = false;
   int retries = 2;                    // number of retries, if open fails
@@ -483,7 +483,7 @@ bool MatrixVisionCameraDriver::openCamera(Config &newconfig)
       }
 
     }
-    catch (matrix_vision_camera::Exception& e)
+    catch (mv_camera::Exception& e)
     {
       state_ = Driver::CLOSED;    // since the open() failed
       if (retries > 0)
@@ -499,7 +499,7 @@ bool MatrixVisionCameraDriver::openCamera(Config &newconfig)
 }
 
 /** device poll */
-void MatrixVisionCameraDriver::poll(void)
+void MVCameraDriver::poll(void)
 {
   // Do not run concurrently with reconfig().
   //
@@ -534,7 +534,7 @@ void MatrixVisionCameraDriver::poll(void)
   }
 }
 
-void MatrixVisionCameraDriver::pollSingle(std::string& outputString)
+void MVCameraDriver::pollSingle(std::string& outputString)
 {
 
   // make sure continuous polling is not active
@@ -567,7 +567,7 @@ void MatrixVisionCameraDriver::pollSingle(std::string& outputString)
  *
  *  @param image points to latest camera frame
  */
-void MatrixVisionCameraDriver::publish(const sensor_msgs::ImagePtr &image)
+void MVCameraDriver::publish(const sensor_msgs::ImagePtr &image)
 {
   image->header.frame_id = config_.frame_id;
 
@@ -597,9 +597,6 @@ void MatrixVisionCameraDriver::publish(const sensor_msgs::ImagePtr &image)
     ROS_WARN_STREAM("[" << camera_name_ << "] calibration matches video mode now");
   }
 
-  // fill in operational parameters
-  dev_->setOperationalParameters(*ci);
-
   ci->header.frame_id = config_.frame_id;
   ci->header.stamp = image->header.stamp;
 
@@ -615,7 +612,7 @@ void MatrixVisionCameraDriver::publish(const sensor_msgs::ImagePtr &image)
  * @param image points to camera Image message
  * @return true if successful, with image filled in
  */
-bool MatrixVisionCameraDriver::read(sensor_msgs::ImagePtr &image)
+bool MVCameraDriver::read(sensor_msgs::ImagePtr &image)
 {
   bool success = true;
   try
@@ -623,7 +620,7 @@ bool MatrixVisionCameraDriver::read(sensor_msgs::ImagePtr &image)
     // Read data from the Camera
     dev_->readData(*image);
   }
-  catch (matrix_vision_camera::Exception& e)
+  catch (mv_camera::Exception& e)
   {
     ROS_WARN_STREAM("[" << camera_name_ << "] Exception reading data: " << e.what());
     success = false;
@@ -640,7 +637,7 @@ bool MatrixVisionCameraDriver::read(sensor_msgs::ImagePtr &image)
  *  @param level bit-wise OR of reconfiguration levels for all
  *               changed parameters (0xffffffff on initial call)
  **/
-void MatrixVisionCameraDriver::reconfig(Config &newconfig, uint32_t level)
+void MVCameraDriver::reconfig(Config &newconfig, uint32_t level)
 {
   // Do not run concurrently with poll().  Tell it to stop running,
   // and wait on the lock until it does.
@@ -719,17 +716,17 @@ void MatrixVisionCameraDriver::reconfig(Config &newconfig, uint32_t level)
  *  immediately with level 0xffffffff.  The reconfig() method will
  *  set initial parameter values, then open the device if it can.
  */
-void MatrixVisionCameraDriver::setup(void)
+void MVCameraDriver::setup(void)
 {
-  srv_.setCallback(boost::bind(&MatrixVisionCameraDriver::reconfig, this, _1, _2));
+  srv_.setCallback(boost::bind(&MVCameraDriver::reconfig, this, _1, _2));
 }
 
 /** driver termination */
-void MatrixVisionCameraDriver::shutdown(void)
+void MVCameraDriver::shutdown(void)
 {
   closeCamera();
 }
 
 }
 ;
-// end namespace matrix_vision_camera_driver
+// end namespace mv_camera_driver

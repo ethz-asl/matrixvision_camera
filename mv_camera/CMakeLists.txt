@@ -34,13 +34,13 @@ set(DRIVER_SOURCES
 
 rosbuild_add_library(mv_camera_driver ${DRIVER_SOURCES})
 
-rosbuild_add_executable(mv_camera_node mv_camera_node.cpp )
+rosbuild_add_executable(mv_camera_node src/mv_camera_node.cpp )
 target_link_libraries(mv_camera_node  mv_camera_driver)
 
-rosbuild_add_library(mv_camera_nodelet nodelet.cpp)
+rosbuild_add_library(mv_camera_nodelet src/mv_camera_nodelet.cpp)
 target_link_libraries(mv_camera_nodelet mv_camera_driver)
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
-rosbuild_add_executable(driverInterface src/driverInterface)
+#rosbuild_add_executable(driverInterface src/driverInterface)

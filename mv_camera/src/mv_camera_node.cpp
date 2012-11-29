@@ -34,7 +34,7 @@
 *********************************************************************/
 
 #include <signal.h>
-#include "driver_matrix_vision_camera.h"
+#include "driver_mv_camera.h"
 
 /** @file
 
@@ -46,11 +46,11 @@
 /** Main node entry point. */
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "matrix_vision_camera_node");
+  ros::init(argc, argv, "mv_camera_node");
   ros::NodeHandle node;
   ros::NodeHandle priv_nh("~");
   ros::NodeHandle camera_nh("camera");
-  matrix_vision_camera_driver::MatrixVisionCameraDriver dvr(priv_nh, camera_nh);
+  mv_camera_driver::MVCameraDriver dvr(priv_nh, camera_nh);
 
   dvr.setup();
     

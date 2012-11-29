@@ -36,7 +36,7 @@
 #include <sensor_msgs/image_encodings.h>
 #include <map>
 
-namespace matrix_vision_camera{
+namespace mv_camera{
 
 std::string pixelFormat(const mvIMPACT::acquire::TImageBufferPixelFormat &format)
 {
@@ -138,4 +138,4 @@ std::string bayerString(const mvIMPACT::acquire::TBayerMosaicParity &pattern, un
   return "";
 }
 
-}; // end namespace matrix_vision_camera
+}; // end namespace mv_camera

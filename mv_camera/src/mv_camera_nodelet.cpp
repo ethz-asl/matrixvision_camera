@@ -41,7 +41,7 @@
 #include <pluginlib/class_list_macros.h>
 #include <nodelet/nodelet.h>
 
-#include "driver_matrix_vision_camera.h"
+#include "driver_mv_camera.h"
 
 /** @file
 
@@ -50,14 +50,14 @@
 */
 
 /** Matrix Vision Camera nodelet implementation. */
-class MatrixVisionCameraNodelet: public nodelet::Nodelet
+class MVCameraNodelet: public nodelet::Nodelet
 {
 public:
-  MatrixVisionCameraNodelet():
+  MVCameraNodelet():
     running_(false)
   {}
 
-  ~MatrixVisionCameraNodelet()
+  virtual ~MVCameraNodelet()
   {
     if (running_)
       {
@@ -74,7 +74,7 @@ private:
   virtual void devicePoll();
 
   volatile bool running_;               ///< device is running
-  boost::shared_ptr<matrix_vision_camera_driver::MatrixVisionCameraDriver> dvr_;
+  boost::shared_ptr<mv_camera_driver::MVCameraDriver> dvr_;
   boost::shared_ptr<boost::thread> deviceThread_;
 };
 
@@ -82,22 +82,22 @@ private:
  *
  *  @note MUST return immediately.
  */
-void MatrixVisionCameraNodelet::onInit()
+void MVCameraNodelet::onInit()
 {
   ros::NodeHandle priv_nh(getPrivateNodeHandle());
   ros::NodeHandle node(getNodeHandle());
   ros::NodeHandle camera_nh(node, "camera");
-  dvr_.reset(new matrix_vision_camera_driver::MatrixVisionCameraDriver(priv_nh, camera_nh));
+  dvr_.reset(new mv_camera_driver::MVCameraDriver(priv_nh, camera_nh));
   dvr_->setup();
 
   // spawn device thread
   running_ = true;
   deviceThread_ = boost::shared_ptr< boost::thread >
-    (new boost::thread(boost::bind(&MatrixVisionCameraNodelet::devicePoll, this)));
+    (new boost::thread(boost::bind(&MVCameraNodelet::devicePoll, this)));
 }
 
 /** Nodelet device poll thread main function. */
-void MatrixVisionCameraNodelet::devicePoll()
+void MVCameraNodelet::devicePoll()
 {
   while (running_)
     {
@@ -108,5 +108,4 @@ void MatrixVisionCameraNodelet::devicePoll()
 // Register this plugin with pluginlib.  Names must match nodelet_velodyne.xml.
 //
 // parameters are: package, class name, class type, base class type
-PLUGINLIB_DECLARE_CLASS(matrix_vision_camera, driver,
-                        MatrixVisionCameraNodelet, nodelet::Nodelet);
+PLUGINLIB_DECLARE_CLASS(mv_camera, MVCcameraNodelet, MVCameraNodelet, nodelet::Nodelet);

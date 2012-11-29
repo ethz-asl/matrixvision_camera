@@ -45,11 +45,11 @@
 #include <string>
 
 
-#include "dev_matrix_vision_camera.h"
-#include "matrix_vision_camera/MatrixVisionCameraConfig.h"
-typedef matrix_vision_camera::MatrixVisionCameraConfig Config;
+#include "dev_mv_camera.h"
+#include <mv_camera/MVCameraConfig.h>
+typedef mv_camera::MVCameraConfig Config;
 
-#include "matrix_vision_camera/propertyMap.h"
+#include <mv_camera/propertyMap.h>
 
 /** @file
 
@@ -57,24 +57,24 @@ typedef matrix_vision_camera::MatrixVisionCameraConfig Config;
 
 */
 
-namespace matrix_vision_camera_driver
+namespace mv_camera_driver
 {
 
-class MatrixVisionCameraDriver
+class MVCameraDriver
 {
 public:
 
   // public methods
-  MatrixVisionCameraDriver(ros::NodeHandle priv_nh,
+  MVCameraDriver(ros::NodeHandle priv_nh,
                    ros::NodeHandle camera_nh);
-  ~MatrixVisionCameraDriver();
+  ~MVCameraDriver();
   void poll(void);
   void setup(void);
   void shutdown(void);
     void pollSingle(std::string& outputString);
 
     
-  bool pollPropertyMapCallback(matrix_vision_camera::propertyMap::Request  &req, matrix_vision_camera::propertyMap::Response &res );
+  bool pollPropertyMapCallback(mv_camera::propertyMap::Request  &req, mv_camera::propertyMap::Response &res );
   std::string getPropertyData( const mvIMPACT::acquire::Property& prop ); 
     
 private:
@@ -84,7 +84,7 @@ private:
   bool openCamera(Config &newconfig);
   void publish(const sensor_msgs::ImagePtr &image);
   bool read(sensor_msgs::ImagePtr &image);
-  void reconfig(matrix_vision_camera::MatrixVisionCameraConfig &newconfig, uint32_t level);
+  void reconfig(mv_camera::MVCameraConfig &newconfig, uint32_t level);
     
   /** Non-recursive mutex for serializing callbacks with device polling. */
   boost::mutex mutex_;
@@ -96,12 +96,12 @@ private:
   ros::NodeHandle camera_nh_;           // camera name space handle
   std::string camera_name_;             // camera name
 
-  /** matrix_vision_camera camera device interface */
-  boost::shared_ptr<matrix_vision_camera::MatrixVisionCamera> dev_;
+  /** mv_camera camera device interface */
+  boost::shared_ptr<mv_camera::MVCamera> dev_;
 
   /** dynamic parameter configuration */
-  matrix_vision_camera::MatrixVisionCameraConfig config_;
-  dynamic_reconfigure::Server<matrix_vision_camera::MatrixVisionCameraConfig> srv_;
+  mv_camera::MVCameraConfig config_;
+  dynamic_reconfigure::Server<mv_camera::MVCameraConfig> srv_;
   ros::Rate cycle_;                     // polling rate when closed
 
   /** camera calibration information */
@@ -118,6 +118,6 @@ private:
     
     
 
-}; // end class MatrixVisionCameraDriver
+}; // end class MVCameraDriver
 
-}; // end namespace matrix_vision_camera_driver
+}; // end namespace mv_camera_driver

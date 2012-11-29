@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 #include <sensor_msgs/image_encodings.h>
-#include "dev_matrix_vision_camera.h"
+#include "dev_mv_camera.h"
 #include "features.h"
 #include "formats.h"
 
@@ -14,7 +14,7 @@
 #define CAM_EXCEPT(except, msg)					\
 		{								\
 	char buf[100];						\
-	snprintf(buf, 100, "[MatrixVisionCamera::%s]: " msg, __FUNCTION__); \
+	snprintf(buf, 100, "[MVCamera::%s]: " msg, __FUNCTION__); \
 	throw except(buf);						\
 		}
 
@@ -22,16 +22,16 @@
 #define CAM_EXCEPT_ARGS(except, msg, ...)				\
 		{									\
 	char buf[100];							\
-	snprintf(buf, 100, "[MatrixVisionCamera::%s]: " msg, __FUNCTION__, __VA_ARGS__); \
+	snprintf(buf, 100, "[MVCamera::%s]: " msg, __FUNCTION__, __VA_ARGS__); \
 	throw except(buf);							\
 		}
 
-using namespace matrix_vision_camera;
+using namespace mv_camera;
 using namespace mvIMPACT::acquire;
 using namespace std;
 
 
-MatrixVisionCamera::MatrixVisionCamera() :
+MVCamera::MVCamera() :
     use_ros_time_(true), cam_(NULL)
 {
   rosTimeOffset_ = -1;
@@ -53,12 +53,12 @@ MatrixVisionCamera::MatrixVisionCamera() :
   dev_mgr_.reset(new mvIMPACT::acquire::DeviceManager);
 }
 
-MatrixVisionCamera::~MatrixVisionCamera()
+MVCamera::~MVCamera()
 {
-  SafeCleanup();
+
 }
 
-/** Open the matrix_vision_camera device and start streaming
+/** Open the mv_camera device and start streaming
  *
  *  @param newconfig new configuration parameters
  *  @return 0 if successful
@@ -68,19 +68,20 @@ MatrixVisionCamera::~MatrixVisionCamera()
  *     * validate newconfig.video_mode
  *     * initialize Features class
  */
-int MatrixVisionCamera::open(matrix_vision_camera::MatrixVisionCameraConfig &newconfig)
+int MVCamera::open(mv_camera::MVCameraConfig &newconfig)
 {
   dev_mgr_->updateDeviceList();
 
   if (dev_mgr_->deviceCount() == 0)
   {
-    CAM_EXCEPT(matrix_vision_camera::Exception, "No cameras found");
+    CAM_EXCEPT(mv_camera::Exception, "No cameras found");
     return -1;
   }
 
   if (newconfig.guid == "" || newconfig.guid.size() < 8)
   {
-    ROS_INFO_STREAM("no GUID specified or not properly specified (guid=\"" << newconfig.guid << "\"), trying to open first available camera");
+    ROS_INFO_STREAM(
+        "no GUID specified or not properly specified (guid=\"" << newconfig.guid << "\"), trying to open first available camera");
     for (unsigned int i = 0; i < dev_mgr_->deviceCount(); i++)
     {
       cam_ = dev_mgr_->getDevice(i);
@@ -94,7 +95,7 @@ int MatrixVisionCamera::open(matrix_vision_camera::MatrixVisionCameraConfig &new
         catch (const mvIMPACT::acquire::ImpactAcquireException& e)
         {
           cam_ = NULL;
-	  ROS_WARN_STREAM("Unable to open camera: " << e.what());
+          ROS_WARN_STREAM("Unable to open camera: " << e.what());
         }
       }
     }
@@ -113,7 +114,7 @@ int MatrixVisionCamera::open(matrix_vision_camera::MatrixVisionCameraConfig &new
       catch (const mvIMPACT::acquire::ImpactAcquireException& e)
       {
         cam_ = NULL;
-	ROS_WARN_STREAM("Unable to open camera: " << e.what());
+        ROS_WARN_STREAM("Unable to open camera: " << e.what());
       }
     }
   }
@@ -122,11 +123,11 @@ int MatrixVisionCamera::open(matrix_vision_camera::MatrixVisionCameraConfig &new
   {
     if (newconfig.guid == "" || newconfig.guid.find("MATRIX_VISION_CAMERA_") == std::string::npos)
     {
-      CAM_EXCEPT(matrix_vision_camera::Exception, "Could not find a camera");
+      CAM_EXCEPT(mv_camera::Exception, "Could not find a camera");
     }
     else
     {
-      CAM_EXCEPT_ARGS(matrix_vision_camera::Exception, "Could not find camera with guid %s", newconfig.guid.c_str());
+      CAM_EXCEPT_ARGS(mv_camera::Exception, "Could not find camera with guid %s", newconfig.guid.c_str());
     }
     return -1;
   }
@@ -138,7 +139,8 @@ int MatrixVisionCamera::open(matrix_vision_camera::MatrixVisionCameraConfig &new
   cam_ss_.reset(new SystemSettings(cam_));
   cam_irc_.reset(new ImageRequestControl(cam_));
 
-  ROS_INFO_STREAM("camera family:"<<cam_->family.read()<<"; camera model: " << cam_->product.read() << "; firmware version: " << cam_->firmwareVersion.read() << "; serial number: " << cam_->serial.read());
+  ROS_INFO_STREAM(
+      "camera family:"<<cam_->family.read()<<"; camera model: " << cam_->product.read() << "; firmware version: " << cam_->firmwareVersion.read() << "; serial number: " << cam_->serial.read());
 
   //////////////////////////////////////////////////////////////
   // initialize camera
@@ -162,42 +164,37 @@ int MatrixVisionCamera::open(matrix_vision_camera::MatrixVisionCameraConfig &new
 
   // TODO: pass newconfig here and eliminate initialize() method
   features_.reset(new Features(cam_));
-    
-  // get features list:
-/* ComponentList cl = cam_->getDeviceDriverFeatureList();
-    std::string  s1 = cl.contentDescriptor();
-    std::string  s2 = cl.docString();
-    std::string s3 = cl.flagsAsString();
-    int valid = cl.size();
-    //ROS_INFO_STREAM("CL:" << s1 << s2 << s3 << inttostr(valid));
-    printf(" %i \n",valid);*/
-    
- //   CameraSettingsMatrixVisionCamera s(cam_);
- //   s.lineDelay_clk.write(100);
- //   int o = s.lineDelay_clk.read();
- //   printf("lineDelay_clk: %i", o);
-    
-    
 
-    // generate the property map
-    generatePropertyMap();
-    
-    
+  // get features list:
+  /* ComponentList cl = cam_->getDeviceDriverFeatureList();
+   std::string  s1 = cl.contentDescriptor();
+   std::string  s2 = cl.docString();
+   std::string s3 = cl.flagsAsString();
+   int valid = cl.size();
+   //ROS_INFO_STREAM("CL:" << s1 << s2 << s3 << inttostr(valid));
+   printf(" %i \n",valid);*/
+
+  //   CameraSettingsMVCamera s(cam_);
+  //   s.lineDelay_clk.write(100);
+  //   int o = s.lineDelay_clk.read();
+  //   printf("lineDelay_clk: %i", o);
+
+  // generate the property map
+  generatePropertyMap();
+
   return 0;
 }
 
 
 /** close the device */
-int MatrixVisionCamera::close()
+int MVCamera::close()
 {
   if (cam_)
   {
     cam_fi_->imageRequestReset(0, 0);
     cam_->close();
-      
-      // reset the timestamp corrector:
-      timestampCorrector_ = sm::timing::TimestampCorrector<double>();
-      
+
+    // reset the timestamp corrector:
   }
 
   return 0;
@@ -205,114 +202,87 @@ int MatrixVisionCamera::close()
 
 
 
-void MatrixVisionCamera::fillSensorMsgs(sensor_msgs::Image& image, const Request* req, ros::Time time_now ) {
+void MVCamera::fillSensorMsgs(sensor_msgs::Image& image, const Request* req, ros::Time time_now)
+{
 
-    
-    // save image info in published message:
-    image.data.resize(req->imageSize.read());
-    image.height = req->imageHeight.read();
-    image.width = req->imageWidth.read();
-    image.step = req->imageLinePitch.read();
-    image.header.seq = req->infoFrameNr.read();
-    // get the image encoding and bayer infos
-    if(req->imageBayerMosaicParity.read() != mvIMPACT::acquire::bmpUndefined)
-    {
-        int bpp = req->imageBytesPerPixel.read()*8;
-        image.encoding = bayerString(req->imageBayerMosaicParity.read(), bpp);
-        // ROS_INFO_STREAM_THROTTLE(1, "raw image, encoding: "<<image.encoding<<" bpp"<<bpp);
-    }
-    else
-    {
-        image.encoding = pixelFormat(req->imagePixelFormat.read());
-        // ROS_INFO_STREAM_THROTTLE(1, "(processed) image, encoding: "<<image.encoding);
-    }
-    // copy the image data
-    memcpy(&image.data[0], req->imageData.read(), image.data.size());
-    
-    if (use_ros_time_)
-    {
-        image.header.stamp = time_now;
-    }
-    else
-    {
-        /*
-        // if the offset is not initialised => do with current frame:
-        if (rosTimeOffset_ == -1) {
-            // current ros time (measured before image processing)
-            // uint64_t rosTimeNs = time_now.toNSec();
-            // image capture time 
-            int64_t imageTimeUs = req->infoTimeStamp_us.read();
-            int64_t exposureTime = req->infoExposeTime_us.read();
-            // store
-            rosTimeOffset_ = imageTimeUs + exposureTime; // 
-            // ROS_INFO_STREAM("rosTimeOffset initialised: " << rosTimeOffset_);
-            
-        }
-        int64_t currentImageTimeUs = req->infoTimeStamp_us.read();
-        int64_t currentExposureTime = req->infoExposeTime_us.read();
-        // substract the offset and exposure time:
-        image.header.stamp = time_now - ros::Duration( double(currentImageTimeUs-rosTimeOffset_ - currentExposureTime) / (1*10e+6)  );*/
-        
-       
-        
-        // get the image timestamp:
-        int64_t currentImageTimeS = req->infoTimeStamp_us.read(); //  / (1*10e+6)
-        // add the corrected timestamp:       
-        image.header.stamp = ros::Time( timestampCorrector_.correctTimestamp(currentImageTimeS, time_now.toSec())) ;
-        
-        
-     //   image.header.seq = req->infoTimeStamp_us.read();
-        
-        
-        //          ROS_INFO_STREAM("TimeStamp:" << image.header.stamp.toSec());
-    }
+  // save image info in published message:
+  image.data.resize(req->imageSize.read());
+  image.height = req->imageHeight.read();
+  image.width = req->imageWidth.read();
+  image.step = req->imageLinePitch.read();
+  image.header.seq = req->infoFrameNr.read();
+  // get the image encoding and bayer infos
+  if (req->imageBayerMosaicParity.read() != mvIMPACT::acquire::bmpUndefined)
+  {
+    int bpp = req->imageBytesPerPixel.read() * 8;
+    image.encoding = bayerString(req->imageBayerMosaicParity.read(), bpp);
+    // ROS_INFO_STREAM_THROTTLE(1, "raw image, encoding: "<<image.encoding<<" bpp"<<bpp);
+  }
+  else
+  {
+    image.encoding = pixelFormat(req->imagePixelFormat.read());
+    // ROS_INFO_STREAM_THROTTLE(1, "(processed) image, encoding: "<<image.encoding);
+  }
+  // copy the image data
+  memcpy(&image.data[0], req->imageData.read(), image.data.size());
 
-    
+  if (use_ros_time_)
+  {
+    image.header.stamp = time_now;
+  }
+  else
+  {
+    // get the image timestamp:
+    double current_image_time = timeUs2Double(req->infoTimeStamp_us.read()) * 1.0e-6;
+    image.header.stamp = ros::Time(current_image_time);
+  }
+
 }
 
 // requests and saves a single image
-void MatrixVisionCamera::readSingleImage(sensor_msgs::Image& image) {
-    
-    ROS_ASSERT_MSG(cam_, "Attempt to read from camera that is not open.");
-    
-    // request one image:
-    int requestResult = cam_fi_->imageRequestSingle(); // cam_irc_.get()
-    // max wait time:
-    const int iMaxWaitTime_ms = 500;
-    // wait for results from the default capture queue
-    int requestNr = cam_fi_->imageRequestWaitFor( iMaxWaitTime_ms );
-    
-    ros::Time time_now = ros::Time::now();
-    
-    // check if the image has been captured without any problems
-    if( !cam_fi_->isRequestNrValid( requestNr ) )
-    {
-        ROS_ERROR_STREAM("Failed to Capture Image. RequestNr: " << requestNr );
-        return;
-    }
-    
-    const Request* req = cam_fi_->getRequest(requestNr);
-    // check request validity
-    if( !cam_fi_->isRequestOK(req) )
-    {
-        ROS_ERROR_STREAM("Request result: " << req->requestResult.readS());
-        return;
-    }
-    
-    fillSensorMsgs(image, req, time_now);
-    
-    // unlock the request
-    cam_fi_->imageRequestUnlock( requestNr );
-    
+void MVCamera::readSingleImage(sensor_msgs::Image& image)
+{
+  ROS_ASSERT_MSG(cam_, "Attempt to read from camera that is not open.");
+
+  // request one image:
+  cam_fi_->imageRequestSingle(); // cam_irc_.get()
+  // max wait time:
+  const int iMaxWaitTime_ms = 500;
+  // wait for results from the default capture queue
+  int requestNr = cam_fi_->imageRequestWaitFor(iMaxWaitTime_ms);
+
+  ros::Time time_now = ros::Time::now();
+
+  // check if the image has been captured without any problems
+  if (!cam_fi_->isRequestNrValid(requestNr))
+  {
+    ROS_ERROR_STREAM("Failed to Capture Image. RequestNr: " << requestNr);
+    return;
+  }
+
+  const Request* req = cam_fi_->getRequest(requestNr);
+  // check request validity
+  if (!req->isOK())
+  {
+    ROS_ERROR_STREAM("Request result: " << req->requestResult.readS());
+    return;
+  }
+
+  fillSensorMsgs(image, req, time_now);
+
+  // unlock the request
+  cam_fi_->imageRequestUnlock(requestNr);
+
 }
 
-void MatrixVisionCamera::clearRequestQueue() {
-    cam_fi_->imageRequestReset( 0, 0 );
+void MVCamera::clearRequestQueue()
+{
+  cam_fi_->imageRequestReset(0, 0);
 }
 
 
 /** Return an image frame */
-void MatrixVisionCamera::readData(sensor_msgs::Image& image)
+void MVCamera::readData(sensor_msgs::Image& image)
 {
   ROS_ASSERT_MSG(cam_, "Attempt to read from camera that is not open.");
   static int err_cnt = 0;
@@ -326,13 +296,13 @@ void MatrixVisionCamera::readData(sensor_msgs::Image& image)
   }
 
   // wait for results from the default capture queue
-  int timeout_ms = static_cast<int> (1.0 / features_->getFPS() * 1.0e3 * 2); // wait max 200% of frametime
+  int timeout_ms = static_cast<int>(1.0 / features_->getFPS() * 1.0e3 * 2); // wait max 200% of frametime
   int request_nr;
 
-  if(err_cnt < 5)
+  if (err_cnt < 5)
     request_nr = cam_fi_->imageRequestWaitFor(timeout_ms);
   else
-    request_nr = cam_fi_->imageRequestWaitFor(timeout_ms*5);
+    request_nr = cam_fi_->imageRequestWaitFor(timeout_ms * 5);
 
   const mvIMPACT::acquire::Request * req;
   ros::Time time_now = ros::Time::now();
@@ -342,76 +312,8 @@ void MatrixVisionCamera::readData(sensor_msgs::Image& image)
     req = cam_fi_->getRequest(request_nr);
     if (req->isOK())
     {
-        
-        
-      // float secondsTime = time_now.toSec();
-      // uint64_t rosTimeUs = time_now.toNSec() / 1000;
-      // int64_t imageTimeUs = req->infoTimeStamp_us.read();
-       
-      // uint64_t deltaT = rosTimeUs - imageTimeUs;
-      // ROS_INFO_STREAM("Delta: " << deltaT << " Ros: " << rosTimeUs << " image: " << imageTimeUs);
-        
-      // ROS_INFO_STREAM("ROSTime:" << secondsTime << " - " << nanoSeconds);
-  
-      // int timeDiffRosImage = nanoSeconds / 1000 - req->infoExposeStart_us.read();
-        
-      // ROS_INFO_STREAM("Delta: " << timeDiffRosImage << " exposureTime:" << exposureTime << " Image Time:" );
-        
- //     ROS_INFO_STREAM("Timings: exp_start= "<< req->infoExposeStart_us.read() << " ts= " << req->infoTimeStamp_us.read() << " delay= " << req->infoTransferDelay_us.read());
 
- /*     image.data.resize(req->imageSize.read());
-      image.height = req->imageHeight.read();
-      image.width = req->imageWidth.read();
-      image.step = req->imageLinePitch.read();
-      image.header.seq = req->infoFrameNr.read();
-      //ROS_INFO_STREAM_THROTTLE(1, "pixformat cam: "<<req->imagePixelFormat.readS()<<" bayer pattern "<<req->imageBayerMosaicParity.readS());
-      if(req->imageBayerMosaicParity.read() != mvIMPACT::acquire::bmpUndefined)
-      {
-        int bpp = req->imageBytesPerPixel.read()*8;
-        image.encoding = bayerString(req->imageBayerMosaicParity.read(), bpp);
-        // ROS_INFO_STREAM_THROTTLE(1, "raw image, encoding: "<<image.encoding<<" bpp"<<bpp);
-      }
-      else
-      {
-        image.encoding = pixelFormat(req->imagePixelFormat.read());
-        // ROS_INFO_STREAM_THROTTLE(1, "(processed) image, encoding: "<<image.encoding);
-      }
-
-      memcpy(&image.data[0], req->imageData.read(), image.data.size());
-
-      if (use_ros_time_)
-      {
-        image.header.stamp = time_now;
-      }
-      else
-      {
-          // if the offset is not initialised => do with current frame:
-          if (rosTimeOffset_ == -1) {
-              // current ros time (measured before image processing)
-              // uint64_t rosTimeNs = time_now.toNSec();
-              // image capture time 
-              int64_t imageTimeUs = req->infoTimeStamp_us.read();
-              int64_t exposureTime = req->infoExposeTime_us.read();
-              // store
-              rosTimeOffset_ = imageTimeUs + exposureTime; // 
-  //            ROS_INFO_STREAM("rosTimeOffset initialised: " << rosTimeOffset_);
-              
-          }
-          int64_t currentImageTimeUs = req->infoTimeStamp_us.read();
-          int64_t currentExposureTime = req->infoExposeTime_us.read();
-          // substract the offset and exposure time:
-          image.header.stamp = time_now - ros::Duration( double(currentImageTimeUs-rosTimeOffset_ - currentExposureTime) / (1*10e+6)  );
-          
-          // double TST = double(currentImageTimeUs-rosTimeOffset_ - currentExposureTime) / (1*10e+6);
-          // ROS_INFO_STREAM("TST:" << TST);
-//          ROS_INFO_STREAM("TimeStamp:" << image.header.stamp.toSec());
-      }
-*/
-        
       fillSensorMsgs(image, req, time_now);
-        
-
-        
       features_->getImageInfo().width = image.width;
       features_->getImageInfo().height = image.height;
       features_->getImageInfo().color_coding = image.encoding;
@@ -421,55 +323,21 @@ void MatrixVisionCamera::readData(sensor_msgs::Image& image)
     else
     {
       cam_fi_->imageRequestUnlock(request_nr);
-      CAM_EXCEPT_ARGS(matrix_vision_camera::Exception, "Error while grabbing frame: %s", req->requestResult.readS().c_str() );
+      CAM_EXCEPT_ARGS(mv_camera::Exception, "Error while grabbing frame: %s", req->requestResult.readS().c_str());
     }
-      
-      
-      
 
-    // this image has been displayed thus the buffer is no longer needed...
+    // this image has been copied, the buffer is no longer needed...
     cam_fi_->imageRequestUnlock(request_nr);
-//    // send a new image request into the capture queue
-//    cam_fi_->imageRequestSingle(/*cam_irc_.get()*/);
 
-//    // send a new image request into the capture queue
-//    int req_single_res = cam_fi_->imageRequestSingle(/*cam_irc_.get()*/);
-//
-//    if(req_single_res != DMR_NO_ERROR)
-//    {
-//      ROS_WARN_STREAM("state: " << cam_->state.read(0) );
-//      CAM_EXCEPT_ARGS(matrix_vision_camera::Exception, "imageRequestSingle failed! reason: %d", req_single_res);
-//    }
-
-
-
-
-      // print some statistics:
-//      string fps = cam_stats_->framesPerSecond.readS();
-//      string capT = cam_stats_->captureTime_s.readS();
-//      cout << "fps: " << fps << " capT:" << capT << endl;
-      
-      
     err_cnt = 0;
   }
   else
   {
-    err_cnt ++;
-
+    err_cnt++;
     ROS_WARN_STREAM("state: "<<cam_->state.read(0)<<" fps "<<features_->getFPS()<< " timeout "<< timeout_ms);
-
-//    // send a new image request into the capture queue
-//    int req_single_res = cam_fi_->imageRequestSingle(/*cam_irc_.get()*/);
-//
-//    if(req_single_res != DMR_NO_ERROR)
-//    {
-//      ROS_WARN_STREAM("state: " << cam_->state.read(0) );
-//      CAM_EXCEPT_ARGS(matrix_vision_camera::Exception, "imageRequestSingle failed! reason: %d", req_single_res);
-//    }
-
-    CAM_EXCEPT_ARGS(matrix_vision_camera::Exception, "imageRequestWaitFor failed! reason: %d", request_nr);
+    CAM_EXCEPT_ARGS(mv_camera::Exception, "imageRequestWaitFor failed! reason: %d", request_nr);
   }
-    
+
 }
 
 
@@ -484,7 +352,7 @@ void MatrixVisionCamera::readData(sensor_msgs::Image& image)
  *   state_ is Driver::OPENED
  *   camera_name_ set to GUID string
  */
-void MatrixVisionCamera::generatePropertyMap() {
+void MVCamera::generatePropertyMap() {
     
     
     
@@ -514,7 +382,7 @@ void MatrixVisionCamera::generatePropertyMap() {
 // mvIMPACT SDK Examples
 // Helper funciton to generate the property maps
 //-----------------------------------------------------------------------------
-void MatrixVisionCamera::populatePropertyMap( StringPropMap& m, ComponentIterator it, const std::string& currentPath )
+void MVCamera::populatePropertyMap( StringPropMap& m, ComponentIterator it, const std::string& currentPath )
 //-----------------------------------------------------------------------------
 {
     while( it.isValid() )
@@ -540,13 +408,13 @@ void MatrixVisionCamera::populatePropertyMap( StringPropMap& m, ComponentIterato
 // \mvIMPACT SDK Examples
 
 
-void MatrixVisionCamera::saveCameraSettings( std::string path) {
+void MVCamera::saveCameraSettings( std::string path) {
 
     cam_fi_->saveSetting(path, sfFile);
     
 }
 
-void MatrixVisionCamera::loadCameraSettings( std::string path ) {
+void MVCamera::loadCameraSettings( std::string path ) {
 
     cam_fi_->loadSetting(path, sfFile);
 

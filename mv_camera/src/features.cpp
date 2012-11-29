@@ -395,13 +395,13 @@ bool Features::setHDR(const std::string & hdr_suggested, std::string * hdr_retur
   {
     if (hdrc->HDREnable.isValid())
     {
-      if (hdr_suggested == matrix_vision_camera::MatrixVisionCamera_hdr_off)
+      if (hdr_suggested == mv_camera::MVCamera_hdr_off)
       {
         //
         hdrc->HDREnable.write(bFalse, 0);
         retval = hdr_suggested;
       }
-      else if (hdr_suggested == matrix_vision_camera::MatrixVisionCamera_hdr_user)
+      else if (hdr_suggested == mv_camera::MVCamera_hdr_user)
       {
         retval = oldconfig_.hdr_mode;
       }
@@ -414,7 +414,7 @@ bool Features::setHDR(const std::string & hdr_suggested, std::string * hdr_retur
     }
     else
     {
-      retval = matrix_vision_camera::MatrixVisionCamera_hdr_off;
+      retval = mv_camera::MVCamera_hdr_off;
     }
   }
   catch (ImpactAcquireException & e)
@@ -442,9 +442,9 @@ bool Features::setColorCoding(const std::string & cc_suggested, std::string * cc
   {
     for (unsigned int i = 0; i < img_dest.pixelFormat.dictSize(); i++)
     {
-      if (matrix_vision_camera::pixelFormat(cc_suggested) == img_dest.pixelFormat.getTranslationDictValue(i))
+      if (mv_camera::pixelFormat(cc_suggested) == img_dest.pixelFormat.getTranslationDictValue(i))
       {
-        img_dest.pixelFormat.write(matrix_vision_camera::pixelFormat(cc_suggested));
+        img_dest.pixelFormat.write(mv_camera::pixelFormat(cc_suggested));
         success = true;
         break;
       }
@@ -456,7 +456,7 @@ bool Features::setColorCoding(const std::string & cc_suggested, std::string * cc
     }
 
     if (cc_returned)
-      *cc_returned = matrix_vision_camera::pixelFormat(img_dest.pixelFormat.read());
+      *cc_returned = mv_camera::pixelFormat(img_dest.pixelFormat.read());
 
     return success;
   }

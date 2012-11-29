@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <string>
 #include "cv.h"
-#include "matrix_vision_camera/propertyMap.h"
+#include "mv_camera/propertyMap.h"
 #include "nodes/propertyMapInterface.h"
 
 #include <cv_bridge/cv_bridge.h>
@@ -22,7 +22,7 @@ namespace enc = sensor_msgs::image_encodings;
 bool saveImageToFileBool = 1;
 bool continuousCapture = 1;
 
-int sendAndPrintResult(ros::ServiceClient client, matrix_vision_camera::propertyMap srv) {
+int sendAndPrintResult(ros::ServiceClient client, mv_camera::propertyMap srv) {
 
     if (client.call(srv)) {
         if (srv.response.status == 0) {
@@ -95,7 +95,7 @@ int main(int argc, char **argv)
     
     
     ros::NodeHandle n;
-    ros::ServiceClient client = n.serviceClient<matrix_vision_camera::propertyMap>("/camera/pollPropertyList");
+    ros::ServiceClient client = n.serviceClient<mv_camera::propertyMap>("/camera/pollPropertyList");
     // create a listener
     ros::Subscriber sub = n.subscribe("/camera/image_raw", 1000, imageMessageCallback);
     // asynchronous spinning to save the images in the background
@@ -111,7 +111,7 @@ int main(int argc, char **argv)
     while( boRun ) {
         
         
-        matrix_vision_camera::propertyMap srv;
+        mv_camera::propertyMap srv;
         // clean request:
         srv.request.command = 0;
         srv.request.identifier = "";

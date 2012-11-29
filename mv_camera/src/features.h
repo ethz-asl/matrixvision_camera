@@ -38,17 +38,17 @@
 
 #include <mvIMPACT_CPP/mvIMPACT_acquire.h>
 
-#include "matrix_vision_camera/MatrixVisionCameraConfig.h"
-typedef matrix_vision_camera::MatrixVisionCameraConfig Config;
+#include "mv_camera/MVCameraConfig.h"
+typedef mv_camera::MVCameraConfig Config;
 
 /** @file
 
- @brief MatrixVisionCamera features interface
+ @brief MVCamera features interface
 
  @author Markus Achtelik
  */
 
-/** @brief MatrixVisionCamera Features class
+/** @brief MVCamera Features class
 
  Handles the features of Matrix Vision BlueXXX cameras.
 
@@ -147,7 +147,7 @@ public:
    // TODO: ugly .. find other way to gather that info
 
 private:
-  typedef int state_t; ///< matrix_vision_camera::MatrixVisionCamera_* state values
+  typedef int state_t; ///< mv_camera::MVCamera_* state values
 
   bool setFramerate(const double & fps_suggested, double * fps_returned = NULL);
   bool setHDR(const std::string & hdr_suggested, std::string * hdr_returned = NULL);

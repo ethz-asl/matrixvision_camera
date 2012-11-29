@@ -8,7 +8,7 @@
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <boost/shared_ptr.hpp>
-#include "matrix_vision_camera/MatrixVisionCameraConfig.h"
+#include "mv_camera/MVCameraConfig.h"
 
 
 typedef std::map<std::string, mvIMPACT::acquire::Property> StringPropMap;
@@ -16,7 +16,7 @@ typedef std::map<std::string, mvIMPACT::acquire::Property> StringPropMap;
 
 class Features;
 
-namespace matrix_vision_camera
+namespace mv_camera
 {
 //! Macro for defining an exception with a given parent
 //  (std::runtime_error should be top parent)
@@ -27,16 +27,21 @@ namespace matrix_vision_camera
     name (const char* msg) : parent (msg) {}	\
   }
 
-//! A standard MatrixVisionCamera exception
+//! A standard MVCamera exception
 DEF_EXCEPTION(Exception, std::runtime_error);
 
-class MatrixVisionCamera
+inline double timeUs2Double(const mvIMPACT::acquire::PropertyI64::value_type & t)
+{
+  return static_cast<double>(t) * 1e-6;
+}
+
+class MVCamera
 {
 public:
-  MatrixVisionCamera();
-  ~MatrixVisionCamera();
+  MVCamera();
+  ~MVCamera();
 
-  int open(matrix_vision_camera::MatrixVisionCameraConfig &newconfig);
+  int open(mv_camera::MVCameraConfig &newconfig);
   int close();
   void readData(sensor_msgs::Image &image);
 
@@ -51,19 +56,19 @@ public:
     return (ci.width == image.width && ci.height == image.height);
   }
 
-  /** set operational parameter fields in CameraInfo message
-   *
-   *  @param ci CameraInfo message to update
-   *
-   *  @post CameraInfo fields filled in (if needed):
-   *    roi (region of interest)
-   *    binning_x, binning_y
-   */
-  void setOperationalParameters(sensor_msgs::CameraInfo &ci)
-  {
-    //      if (format7_.active())
-    //        format7_.setOperationalParameters(ci);
-  }
+//  /** set operational parameter fields in CameraInfo message
+//   *
+//   *  @param ci CameraInfo message to update
+//   *
+//   *  @post CameraInfo fields filled in (if needed):
+//   *    roi (region of interest)
+//   *    binning_x, binning_y
+//   */
+//  void setOperationalParameters(sensor_msgs::CameraInfo &ci)
+//  {
+//    //      if (format7_.active())
+//    //        format7_.setOperationalParameters(ci);
+//  }
 
   std::string device_id_;
   boost::shared_ptr<Features> features_;
@@ -78,8 +83,6 @@ public:
 
 private:
   bool use_ros_time_;
-
-  sm::timing::TimestampCorrector<double> timestampCorrector_;
 
   int64_t rosTimeOffset_; // time offset between camera and ros time (as long as it is -1 => not initialised)
 
@@ -97,7 +100,6 @@ private:
 
   void fillSensorMsgs(sensor_msgs::Image& image, const Request* req, ros::Time time_now);
 
-  void SafeCleanup();
 };
 }
 ;
