@@ -1,0 +1,20 @@
+<package>
+  <description brief="mv_camera">
+
+     mv_camera
+
+  </description>
+  <author>Markus Achtelik</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/mv_camera</url>
+  <depend package="roscpp"/>
+  <depend package="camera_info_manager"/>
+  <depend package="driver_base"/>
+  <depend package="dynamic_reconfigure"/>
+  <depend package="image_transport"/>
+  <depend package="nodelet"/>
+
+</package>
+
+
