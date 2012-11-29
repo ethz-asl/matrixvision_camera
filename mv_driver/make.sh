@@ -81,21 +81,23 @@ mkdir -p GenICam
 cd GenICam
 # the runtime tar contains either the i86 or the x64 tgz
 if [ -r ../GenICam_Runtime_gcc40_Linux32_i86_v*.tgz ]; then
+       
+   if [ x$TARGET != xx86 ]; then
+      echo 'Platform conflict : GenICam runtime is 32bit, but target is 64bit'
+      exit 1
+   fi
    tar xfz ../GenICam_Runtime_gcc40_Linux32_i86_v*.tgz;
    echo -L$PACKAGE_DIR/$BLUECOUGAR_NAME"_runtime"/GenICam/bin/Linux32_i86 >> $LINKER_PATHS
    echo -L$PACKAGE_DIR/$BLUECOUGAR_NAME"_runtime"/GenICam/bin/Linux32_i86/GenApi/Generic >> $LINKER_PATHS
-   
-   if [ x$TARGET != xx86 ]; then
-      echo 'Platform conflict : GenICam runtime is 32bit, but target is 64bit'
-   fi
 fi
 if [ -r ../GenICam_Runtime_gcc40_Linux64_x64_v*.tgz ]; then
+   if [ x$TARGET = xx86 ]; then
+      echo 'Platform conflict : GenICam runtime is 64bit, but target is 32bit'
+      exit 1
+   fi
    tar xfz ../GenICam_Runtime_gcc40_Linux64_x64_v*.tgz;
    echo -L$PACKAGE_DIR/$BLUECOUGAR_NAME"_runtime"/GenICam/bin/Linux64_x64 >> $LINKER_PATHS
    echo -L$PACKAGE_DIR/$BLUECOUGAR_NAME"_runtime"/GenICam/bin/Linux64_x64/GenApi/Generic >> $LINKER_PATHS
-   if [ x$TARGET = xx86 ]; then
-      echo 'Platform conflict : GenICam runtime is 64bit, but target is 32bit'
-   fi
 fi
 
 # pass the genicam paths to the compiler, such that the app can setup the environment itself
