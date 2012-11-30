@@ -1,0 +1,10 @@
+<library path="lib/libmv_camera_nodelet">
+  <class name="mv_camera/driver"
+         type="MVCameraNodelet"
+         base_class_type="nodelet::Nodelet">
+    <description> 
+      Matrix Vision camera driver nodelet.
+    </description>
+  </class>
+</library>
+

@@ -14,7 +14,8 @@ rosbuild_init()
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
-rosbuild_gensrv()
+rosbuild_gensrv() #temporarily don't build service until const string bug is fixed
+rosbuild_genmsg()
 
 # auto-generated dynamic reconfiguration GUI
 rosbuild_find_ros_package(dynamic_reconfigure)
@@ -43,4 +44,4 @@ target_link_libraries(mv_camera_nodelet mv_camera_driver)
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
-#rosbuild_add_executable(driverInterface src/driverInterface)
+rosbuild_add_executable(mv_camera_interface src/driver_interface_node)

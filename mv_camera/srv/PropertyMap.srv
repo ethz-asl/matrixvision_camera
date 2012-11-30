@@ -1,0 +1,24 @@
+int8 GET_PROPERTY_LIST=0
+int8 SET_PROPERTY=1
+int8 GET_PROPERTY_INFO=2
+int8 SEARCH_PROPERTY_MAP=3
+int8 SAVE_SETTINGS=4
+int8 LOAD_SETTINGS=5
+
+int8 START_CAPTURE_PROCESS=6
+int8 STOP_CAPTURE_PROCESS=7
+int8 CAPTURE_SINGLE_FRAME=8
+int8 RESTART_DEVICE=9
+int8 CLOSE_DEVICE=10
+int8 OPEN_DEVICE=11
+
+string SHOW_FLAGS=flagsOn
+string SHOW_VALUES=valuesOn
+
+int8 command
+string identifier
+string value
+float64 testd=1.23456
+---
+string result
+int8 status

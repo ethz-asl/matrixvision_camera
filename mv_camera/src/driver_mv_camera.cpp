@@ -2,7 +2,7 @@
  * Software License Agreement (BSD License)
  *
  *  Copyright (C) 2009, 2010 Jack O'Quin, Patrick Beeson
- *  Copyright (C) 2012, Markus Achtelik
+ *  Copyright (C) 2012, Markus Achtelik, Luc Oth
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -39,11 +39,7 @@
 #include <tf/transform_listener.h>
 
 #include "driver_mv_camera.h"
-#include "mv_camera/MVCameraConfig.h"
 #include "features.h"
-
-#include "mv_camera/propertyMap.h"
-#include "propertyMapInterface.h"
 
 /** @file
 
@@ -63,6 +59,9 @@
 
  */
 using namespace std;
+
+namespace mv_camera
+{
 
 string to_lower(string s)
 {
@@ -87,32 +86,20 @@ StringPropMap::iterator find_ignore_case(StringPropMap& m, const string& s)
   return find_if(m.begin(), m.end(), key_lcase_equal(s));
 }
 
-namespace mv_camera_driver
-{
 // some convenience typedefs
 typedef mv_camera::MVCameraConfig Config;
 typedef driver_base::Driver Driver;
 typedef driver_base::SensorLevels Levels;
 
 MVCameraDriver::MVCameraDriver(ros::NodeHandle priv_nh, ros::NodeHandle camera_nh) :
-    state_(Driver::CLOSED),
-    reconfiguring_(false),
-    priv_nh_(priv_nh),
-    camera_nh_(camera_nh),
-    camera_name_("camera"),
-    dev_(new mv_camera::MVCamera()),
-    srv_(priv_nh),
-    cycle_(1.0),            // slow poll when closed
-    cinfo_(new camera_info_manager::CameraInfoManager(camera_nh_)), calibration_matches_(true),
-    it_(new image_transport::ImageTransport(camera_nh_)), image_pub_(it_->advertiseCamera("image_raw", 1))
+    state_(Driver::CLOSED), reconfiguring_(false), priv_nh_(priv_nh), camera_nh_(camera_nh), camera_name_("camera"), dev_(
+        new mv_camera::MVCamera()), srv_(priv_nh), cycle_(1.0),            // slow poll when closed
+    cinfo_(new camera_info_manager::CameraInfoManager(camera_nh_)), calibration_matches_(true), it_(
+        new image_transport::ImageTransport(camera_nh_)), image_pub_(it_->advertiseCamera("image_raw", 1))
 {
-
   // publish service:
-  serviceServer_ = camera_nh_.advertiseService("pollPropertyList", &MVCameraDriver::pollPropertyMapCallback,
-                                               this);
-  cout << camera_name_ << endl << endl;
+  serviceServer_ = camera_nh_.advertiseService("pollPropertyList", &MVCameraDriver::pollPropertyMapCallback, this);
   continuousPoll_ = true;
-
 }
 
 MVCameraDriver::~MVCameraDriver()
@@ -216,12 +203,10 @@ std::string MVCameraDriver::getPropertyData(const mvIMPACT::acquire::Property& p
   output += "Value: " + prop.readS() + " \n";
 
   return output;
-
 }
 // \mvIMPACT SDK Examples
 
-bool MVCameraDriver::pollPropertyMapCallback(mv_camera::propertyMap::Request &req,
-                                                       mv_camera::propertyMap::Response &res)
+bool MVCameraDriver::pollPropertyMapCallback(PropertyMap::Request &req, PropertyMap::Response &res)
 {
 
   // parse commands
@@ -230,7 +215,7 @@ bool MVCameraDriver::pollPropertyMapCallback(mv_camera::propertyMap::Request &re
   int outputStatus = 1; // return always success (we are optimistic...)
 
   // returns the whole list separated by \n
-  if (cmd == PROPERTYMAP_GET_PROPERTY_LIST)
+  if (cmd == PropertyMap::Request::GET_PROPERTY_LIST)
   {  // identifier and value empty
 
     ROS_INFO("sending property list");
@@ -245,11 +230,11 @@ bool MVCameraDriver::pollPropertyMapCallback(mv_camera::propertyMap::Request &re
       {
         outputString += it->first;
 
-        if (req.value == PROPERTYMAP_SHOW_FLAGS || req.identifier == PROPERTYMAP_SHOW_FLAGS)
+        if (req.value == PropertyMap::Request::SHOW_FLAGS || req.identifier == PropertyMap::Request::SHOW_FLAGS)
         {
           outputString += " [ " + it->second.flagsAsString() + " ] ";
         }
-        if (req.value == PROPERTYMAP_SHOW_VALUES || req.identifier == PROPERTYMAP_SHOW_VALUES)
+        if (req.value == PropertyMap::Request::SHOW_VALUES || req.identifier == PropertyMap::Request::SHOW_VALUES)
         {
           outputString += " [ " + it->second.readSArray() + " ] ";
         }
@@ -261,7 +246,7 @@ bool MVCameraDriver::pollPropertyMapCallback(mv_camera::propertyMap::Request &re
 
   }
   // returns an explanation text with the property stuff
-  else if (cmd == PROPERTYMAP_GET_PROPERTY_INFO)
+  else if (cmd == PropertyMap::Request::GET_PROPERTY_INFO)
   { // identifier contains the string identifier of the property
 
     ROS_INFO("sending property details");
@@ -287,7 +272,7 @@ bool MVCameraDriver::pollPropertyMapCallback(mv_camera::propertyMap::Request &re
 
   }
   // returns the resulting new property value
-  else if (cmd == PROPERTYMAP_SET_PROPERTY)
+  else if (cmd == PropertyMap::Request::SET_PROPERTY)
   { // identifier containts the string identifier and value the new value
     ROS_INFO("modify property");
 
@@ -340,7 +325,6 @@ bool MVCameraDriver::pollPropertyMapCallback(mv_camera::propertyMap::Request &re
       }
       string newValue = prop.readS();
       outputString += "Old Value: " + oldValue + " \n New Value: " + newValue + "\n";
-
     }
     catch (const mvIMPACT::acquire::ImpactAcquireException& e)
     {
@@ -348,12 +332,10 @@ bool MVCameraDriver::pollPropertyMapCallback(mv_camera::propertyMap::Request &re
       outputString += e.getErrorString() + "(error code: " + e.getErrorCodeAsString() + ")" + "\n";
       outputStatus = 0;
     }
-
   }
   // search for keys which contain portion of string
-  else if (cmd == PROPERTYMAP_SEARCH_PROPERTY_MAP)
+  else if (cmd == PropertyMap::Request::SEARCH_PROPERTY_MAP)
   {
-
     // loop the propertymap:
     StringPropMap::const_iterator it;
     string s1;
@@ -366,37 +348,35 @@ bool MVCameraDriver::pollPropertyMapCallback(mv_camera::propertyMap::Request &re
       {
         outputString += " " + it->first + " \n";
       }
-
     }
-
   }
-  else if (cmd == PROPERTYMAP_SAVE_SETTINGS)
+  else if (cmd == PropertyMap::Request::SAVE_SETTINGS)
   {
     dev_->saveCameraSettings(req.identifier);
   }
-  else if (cmd == PROPERTYMAP_LOAD_SETTINGS)
+  else if (cmd == PropertyMap::Request::LOAD_SETTINGS)
   {
     dev_->loadCameraSettings(req.identifier);
   }
   // capture process control:
-  else if (cmd == DI_START_CAPTURE_PROCESS)
+  else if (cmd == PropertyMap::Request::START_CAPTURE_PROCESS)
   {
     continuousPoll_ = 1;
   }
-  else if (cmd == DI_STOP_CAPTURE_PROCESS)
+  else if (cmd == PropertyMap::Request::STOP_CAPTURE_PROCESS)
   {
     continuousPoll_ = 0;
     // clean requests on camera:
     dev_->clearRequestQueue();
   }
-  else if (cmd == DI_CAPTURE_SINGLE_FRAME)
+  else if (cmd == PropertyMap::Request::CAPTURE_SINGLE_FRAME)
   {
     pollSingle(outputString);
     dev_->clearRequestQueue();
   }
-  else if (cmd == DI_RESTART_DEVICE)
+  else if (cmd == PropertyMap::Request::RESTART_DEVICE)
   {  // close device and restart and initialise
-    // take lock
+     // take lock
     boost::mutex::scoped_lock lock(mutex_);
     // close
     closeCamera();
@@ -411,7 +391,7 @@ bool MVCameraDriver::pollPropertyMapCallback(mv_camera::propertyMap::Request &re
       outputStatus = 0;
     }
   }
-  else if (cmd == DI_CLOSE_DEVICE)
+  else if (cmd == PropertyMap::Request::CLOSE_DEVICE)
   {
     // take lock
     boost::mutex::scoped_lock lock(mutex_);
@@ -424,7 +404,7 @@ bool MVCameraDriver::pollPropertyMapCallback(mv_camera::propertyMap::Request &re
       outputString += "Could not close camera!";
 
   }
-  else if (cmd == DI_OPEN_DEVICE)
+  else if (cmd == PropertyMap::Request::OPEN_DEVICE)
   {
     boost::mutex::scoped_lock lock(mutex_);
     if (openCamera(config_))
@@ -441,7 +421,6 @@ bool MVCameraDriver::pollPropertyMapCallback(mv_camera::propertyMap::Request &re
   res.result = outputString;
   res.status = outputStatus;
   return true;
-
 }
 
 /** Open the camera device.
@@ -540,7 +519,6 @@ void MVCameraDriver::pollSingle(std::string& outputString)
   // make sure continuous polling is not active
   if (!continuousPoll_)
   {
-
     boost::mutex::scoped_lock lock(mutex_);
     bool do_sleep = (state_ == Driver::CLOSED);
     if (!do_sleep)
@@ -550,7 +528,6 @@ void MVCameraDriver::pollSingle(std::string& outputString)
 
       dev_->readSingleImage(*image);
       publish(image);
-
     }
     else
     {
@@ -637,7 +614,7 @@ bool MVCameraDriver::read(sensor_msgs::ImagePtr &image)
  *  @param level bit-wise OR of reconfiguration levels for all
  *               changed parameters (0xffffffff on initial call)
  **/
-void MVCameraDriver::reconfig(Config &newconfig, uint32_t level)
+void MVCameraDriver::reconfig(MVCameraConfig &newconfig, uint32_t level)
 {
   // Do not run concurrently with poll().  Tell it to stop running,
   // and wait on the lock until it does.
@@ -729,4 +706,4 @@ void MVCameraDriver::shutdown(void)
 
 }
 ;
-// end namespace mv_camera_driver
+// end namespace mv_camera

@@ -74,7 +74,7 @@ private:
   virtual void devicePoll();
 
   volatile bool running_;               ///< device is running
-  boost::shared_ptr<mv_camera_driver::MVCameraDriver> dvr_;
+  boost::shared_ptr<mv_camera::MVCameraDriver> dvr_;
   boost::shared_ptr<boost::thread> deviceThread_;
 };
 
@@ -87,7 +87,7 @@ void MVCameraNodelet::onInit()
   ros::NodeHandle priv_nh(getPrivateNodeHandle());
   ros::NodeHandle node(getNodeHandle());
   ros::NodeHandle camera_nh(node, "camera");
-  dvr_.reset(new mv_camera_driver::MVCameraDriver(priv_nh, camera_nh));
+  dvr_.reset(new mv_camera::MVCameraDriver(priv_nh, camera_nh));
   dvr_->setup();
 
   // spawn device thread
@@ -108,4 +108,4 @@ void MVCameraNodelet::devicePoll()
 // Register this plugin with pluginlib.  Names must match nodelet_velodyne.xml.
 //
 // parameters are: package, class name, class type, base class type
-PLUGINLIB_DECLARE_CLASS(mv_camera, MVCcameraNodelet, MVCameraNodelet, nodelet::Nodelet);
+PLUGINLIB_DECLARE_CLASS(mv_camera, driver, MVCameraNodelet, nodelet::Nodelet);

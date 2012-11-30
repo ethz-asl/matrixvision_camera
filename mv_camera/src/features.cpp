@@ -1,4 +1,37 @@
-
+/*********************************************************************
+ * Software License Agreement (BSD License)
+ *
+ *  Copyright (C) 2009, 2010 Jack O'Quin
+ *  Copyright (C) 2012, Markus Achtelik
+ *  All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *   * Neither the name of the author nor other contributors may be
+ *     used to endorse or promote products derived from this software
+ *     without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
+ *********************************************************************/
 
 #include <cmath>
 #include "features.h"
@@ -24,7 +57,7 @@ using namespace mvIMPACT::acquire;
  *  @param pointer to camera device structure.
  */
 Features::Features(Device *cam) :
-  cam_(cam), fps_(20.0) // set to something != 0
+    cam_(cam), fps_(20.0) // set to something != 0
 {
 }
 
@@ -50,9 +83,9 @@ double Features::computeFrameTime()
 {
   CameraSettingsBlueDevice bfs(cam_);
 
-  double pixel_clock = static_cast<double> (bfs.pixelClock_KHz.read()) * 1.0e3;
-  double width = static_cast<double> (bfs.aoiWidth.read(plMaxValue));
-  double height = static_cast<double> (bfs.aoiHeight.read(plMaxValue));
+  double pixel_clock = static_cast<double>(bfs.pixelClock_KHz.read()) * 1.0e3;
+  double width = static_cast<double>(bfs.aoiWidth.read(plMaxValue));
+  double height = static_cast<double>(bfs.aoiHeight.read(plMaxValue));
   return (width + 94) * (height + 45) / pixel_clock;
 }
 
@@ -93,10 +126,10 @@ bool Features::setFramerate(const double & fps_suggested, double * fps_returned)
       *fps_returned = (double)fps_ret;
   }
   else if (cam_->family.readS() == "mvBlueFOX" && cam_->product.readS() != "mvBlueFOX-ML/IGC202dG")
-  {      
+  {
     IOSubSystemBlueFOX bluefox_IOs(cam_);
     CameraSettingsBlueFOX bluefox_settings(cam_);
-      
+
     // define a HRTC program that results in a define image frequency
     // the hardware real time controller shall be used to trigger an image
     bluefox_settings.triggerSource.write(ctsRTCtrl);
@@ -165,82 +198,6 @@ bool Features::setFramerate(const double & fps_suggested, double * fps_returned)
 }
 
 
-
-/*
-
-
-
-void Features::reconfigure(Config *newconfig)  {
-
-    // get the settings
-    SettingsBluecougar settings(cam_);
-    CameraSettingsBluecougar & cam_settings = settings.cameraSetting;
-
-}
-
-
-
-*//*
-
-
-
-//-----------------------------------------------------------------------------
-// This function makes heavy use of strings. In real world applications
-// this can be avoided if optimal performance is crucial. All properties can be modified
-// via strings, but most properties can also be modified with numerical (int / double )
-// values, which is much faster, but not as descriptive for a sample application
-void modifyPropertyValue( const mvIMPACT::acquire::Property& prop, const std::string& param = "", const std::string& index = "" )
-//-----------------------------------------------------------------------------
-{
-	try
-	{
-		const std::string name(prop.name());
-		int valIndex = 0;
-		if( prop.isWriteable() )
-		{
-			if( param.empty() )
-			{
-				std::cout << "Enter the new value for '" << name << "': ";
-				std::string val;
-				std::cin >> val;
-				// remove the '\n' from the stream
-				std::cin.get();
-				if( prop.valCount() > 1 )
-				{
-					std::cout << "'" << name << "' defines " << prop.valCount() << " values. Enter the index (zero-based) of the value to modify: ";
-					std::cin >> valIndex;
-					// remove the '\n' from the stream
-					std::cin.get();
-				}
-				prop.writeS( val, valIndex );
-			}
-			else
-			{
-				if( !index.empty() )
-				{
-					valIndex = atoi( index.c_str() );
-				}
-				prop.writeS( param, valIndex );
-			}
-		}
-		else
-		{
-			std::cout << "'" << name << "' is read-only, thus can't be modified." << std::endl;
-		}
-	}
-	catch( const mvIMPACT::acquire::ImpactAcquireException& e )
-	{
-		std::cout << "An exception occurred: " << e.getErrorString() << "(error code: " << e.getErrorCodeAsString() << ")" << std::endl;
-	}
-}
-
-*/
-
-
-
-
-
-
 /** Reconfigure features for already open device.
  *
  *  For each supported feature that has changed, update the device.
@@ -256,7 +213,7 @@ void modifyPropertyValue( const mvIMPACT::acquire::Property& prop, const std::st
 void Features::reconfigure(Config *newconfig)
 {
 //  SettingsBlueCOUGAR settings(cam_);
-  CameraSettingsBlueDevice  cam_settings(cam_);
+  CameraSettingsBlueDevice cam_settings(cam_);
 
   newconfig->x_offset = clamp(newconfig->x_offset, 0, cam_settings.aoiWidth.read(plMaxValue) - 16);
   newconfig->y_offset = clamp(newconfig->y_offset, 0, cam_settings.aoiHeight.read(plMaxValue) - 16);
@@ -271,8 +228,8 @@ void Features::reconfigure(Config *newconfig)
 
   // shutter control
   if ((newconfig->shutter != oldconfig_.shutter) || (newconfig->shutter_auto != oldconfig_.shutter_auto)
-      || (newconfig->shutter_auto_max != oldconfig_.shutter_auto_max) || (newconfig->shutter_auto_min
-      != oldconfig_.shutter_auto_min))
+      || (newconfig->shutter_auto_max != oldconfig_.shutter_auto_max)
+      || (newconfig->shutter_auto_min != oldconfig_.shutter_auto_min))
   {
     mvIMPACT::acquire::TAutoExposureControl aec = (newconfig->shutter_auto ? aecOn : aecOff);
     cam_settings.autoExposeControl.write(aec);
@@ -285,8 +242,6 @@ void Features::reconfigure(Config *newconfig)
     //			exposure_time = sToUs(newconfig->shutter);
     //		}
 
-
-
     double frame_time = computeFrameTime();
     double exp_max = 1.0 / fps_ - frame_time - 2 * TRIGGER_PULSE_WIDTH;
     exp_max *= 0.9; // leave some safety margin for max. exposure
@@ -295,9 +250,12 @@ void Features::reconfigure(Config *newconfig)
     newconfig->shutter_auto_min = clamp(newconfig->shutter_auto_min, double(0), exp_max);
     newconfig->shutter_auto_max = clamp(newconfig->shutter_auto_max, double(0), exp_max);
 
-    ROS_WARN_STREAM_COND(newconfig->shutter == exp_max, "limited shutter time to "<<exp_max*1000<< " ms not to affect framerate");
-    ROS_WARN_STREAM_COND(newconfig->shutter_auto_min == exp_max, "limited min. auto shutter time to "<<exp_max*1000<< " ms not to affect framerate");
-    ROS_WARN_STREAM_COND(newconfig->shutter_auto_max == exp_max, "limited max. auto shutter time to "<<exp_max*1000<< " ms not to affect framerate");
+    ROS_WARN_STREAM_COND(newconfig->shutter == exp_max,
+                         "limited shutter time to "<<exp_max*1000<< " ms not to affect framerate");
+    ROS_WARN_STREAM_COND(newconfig->shutter_auto_min == exp_max,
+                         "limited min. auto shutter time to "<<exp_max*1000<< " ms not to affect framerate");
+    ROS_WARN_STREAM_COND(newconfig->shutter_auto_max == exp_max,
+                         "limited max. auto shutter time to "<<exp_max*1000<< " ms not to affect framerate");
 
     int exposure_time = sToUs(newconfig->shutter);
     configure(cam_settings.expose_us, exposure_time, &exposure_time);
@@ -328,7 +286,8 @@ void Features::reconfigure(Config *newconfig)
   }
   catch (ImpactAcquireException & e)
   {
-    ROS_WARN("couldn't set auto controller speed to %s, reason: %s", newconfig->auto_control_speed.c_str(), e.getErrorString().c_str());
+    ROS_WARN(
+        "couldn't set auto controller speed to %s, reason: %s", newconfig->auto_control_speed.c_str(), e.getErrorString().c_str());
     newconfig->auto_control_speed = oldconfig_.auto_control_speed;
   }
 
@@ -358,7 +317,7 @@ void Features::reconfigure(Config *newconfig)
     newconfig->auto_query_values = false;
 
     // TODO: handle 16 bit
-    if(image_info_.color_coding.find("bayer")!=std::string::npos)
+    if (image_info_.color_coding.find("bayer") != std::string::npos)
       newconfig->color_coding = "raw8";
     else
       newconfig->color_coding = image_info_.color_coding;
@@ -387,8 +346,9 @@ bool Features::setHDR(const std::string & hdr_suggested, std::string * hdr_retur
   {
     hdrc = &bluecougar_hdrc;
   }
-  else {
-      return false;
+  else
+  {
+    return false;
   }
 
   try

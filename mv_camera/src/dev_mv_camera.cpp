@@ -1,4 +1,36 @@
-
+/*********************************************************************
+ * Software License Agreement (BSD License)
+ *
+ *  Copyright (C) 2012, Markus Achtelik, Luc Oth
+ *  All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *   * Neither the name of the author nor other contributors may be
+ *     used to endorse or promote products derived from this software
+ *     without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
+ *********************************************************************/
 
 #include <stdint.h>
 
@@ -30,7 +62,6 @@ using namespace mv_camera;
 using namespace mvIMPACT::acquire;
 using namespace std;
 
-
 MVCamera::MVCamera() :
     use_ros_time_(true), cam_(NULL)
 {
@@ -38,6 +69,7 @@ MVCamera::MVCamera() :
 
   int ret = 0;
 
+  // from http://gcc.gnu.org/onlinedocs/cpp/Stringification.html
 #define xstr(s) str(s)
 #define str(s) #s
 
@@ -165,26 +197,11 @@ int MVCamera::open(mv_camera::MVCameraConfig &newconfig)
   // TODO: pass newconfig here and eliminate initialize() method
   features_.reset(new Features(cam_));
 
-  // get features list:
-  /* ComponentList cl = cam_->getDeviceDriverFeatureList();
-   std::string  s1 = cl.contentDescriptor();
-   std::string  s2 = cl.docString();
-   std::string s3 = cl.flagsAsString();
-   int valid = cl.size();
-   //ROS_INFO_STREAM("CL:" << s1 << s2 << s3 << inttostr(valid));
-   printf(" %i \n",valid);*/
-
-  //   CameraSettingsMVCamera s(cam_);
-  //   s.lineDelay_clk.write(100);
-  //   int o = s.lineDelay_clk.read();
-  //   printf("lineDelay_clk: %i", o);
-
   // generate the property map
   generatePropertyMap();
 
   return 0;
 }
-
 
 /** close the device */
 int MVCamera::close()
@@ -199,8 +216,6 @@ int MVCamera::close()
 
   return 0;
 }
-
-
 
 void MVCamera::fillSensorMsgs(sensor_msgs::Image& image, const Request* req, ros::Time time_now)
 {
@@ -280,7 +295,6 @@ void MVCamera::clearRequestQueue()
   cam_fi_->imageRequestReset(0, 0);
 }
 
-
 /** Return an image frame */
 void MVCamera::readData(sensor_msgs::Image& image)
 {
@@ -340,9 +354,6 @@ void MVCamera::readData(sensor_msgs::Image& image)
 
 }
 
-
-
-
 /** Generates a Property Map which links Camera Properties to an Identifier String:
  *
  * @param newconfig configuration parameters
@@ -352,72 +363,71 @@ void MVCamera::readData(sensor_msgs::Image& image)
  *   state_ is Driver::OPENED
  *   camera_name_ set to GUID string
  */
-void MVCamera::generatePropertyMap() {
-    
-    
-    
-    DeviceComponentLocator locator(cam_, dltSetting, "Base");
-    populatePropertyMap( propertyMap_, ComponentIterator(locator.searchbase_id()).firstChild() );
-    
-    try
-    {
-        // this category is not supported by every device, thus we can expect an exception if this feature is missing
-        locator = DeviceComponentLocator(cam_, dltIOSubSystem);
-        populatePropertyMap( propertyMap_, ComponentIterator(locator.searchbase_id()).firstChild() );
-    } 
-    catch( const ImpactAcquireException& ) {}
-    
-    locator = DeviceComponentLocator(cam_, dltRequest);
-    populatePropertyMap( propertyMap_, ComponentIterator(locator.searchbase_id()).firstChild() );
-    locator = DeviceComponentLocator(cam_, dltSystemSettings);
-    populatePropertyMap( propertyMap_, ComponentIterator(locator.searchbase_id()).firstChild(), string("SystemSettings") );
-    locator = DeviceComponentLocator(cam_, dltInfo);
-    populatePropertyMap( propertyMap_, ComponentIterator(locator.searchbase_id()).firstChild(), string("Info") );
-    populatePropertyMap( propertyMap_, ComponentIterator(cam_->hDev()).firstChild(), string("Device") );
-    
-    
-} 
+void MVCamera::generatePropertyMap()
+{
 
+  DeviceComponentLocator locator(cam_, dltSetting, "Base");
+  populatePropertyMap(propertyMap_, ComponentIterator(locator.searchbase_id()).firstChild());
+
+  try
+  {
+    // this category is not supported by every device, thus we can expect an exception if this feature is missing
+    locator = DeviceComponentLocator(cam_, dltIOSubSystem);
+    populatePropertyMap(propertyMap_, ComponentIterator(locator.searchbase_id()).firstChild());
+  }
+  catch (const ImpactAcquireException&)
+  {
+  }
+
+  locator = DeviceComponentLocator(cam_, dltRequest);
+  populatePropertyMap(propertyMap_, ComponentIterator(locator.searchbase_id()).firstChild());
+  locator = DeviceComponentLocator(cam_, dltSystemSettings);
+  populatePropertyMap(propertyMap_, ComponentIterator(locator.searchbase_id()).firstChild(), string("SystemSettings"));
+  locator = DeviceComponentLocator(cam_, dltInfo);
+  populatePropertyMap(propertyMap_, ComponentIterator(locator.searchbase_id()).firstChild(), string("Info"));
+  populatePropertyMap(propertyMap_, ComponentIterator(cam_->hDev()).firstChild(), string("Device"));
+
+}
 
 // mvIMPACT SDK Examples
 // Helper funciton to generate the property maps
 //-----------------------------------------------------------------------------
-void MVCamera::populatePropertyMap( StringPropMap& m, ComponentIterator it, const std::string& currentPath )
+void MVCamera::populatePropertyMap(StringPropMap& m, ComponentIterator it, const std::string& currentPath)
 //-----------------------------------------------------------------------------
 {
-    while( it.isValid() )
+  while (it.isValid())
+  {
+    std::string fullName(currentPath);
+    if (fullName != "")
     {
-        std::string fullName( currentPath );
-        if( fullName != "" )
-        {
-            fullName += "/";
-        }
-        fullName += it.name();
-        if( it.isList() )
-        {
-            populatePropertyMap( m, it.firstChild(), fullName );
-        }
-        else if( it.isProp() )
-        {
-            m.insert( make_pair( fullName, Property( it ) ) );
-        }
-        ++it;
-        // method object will be ignored...
+      fullName += "/";
     }
+    fullName += it.name();
+    if (it.isList())
+    {
+      populatePropertyMap(m, it.firstChild(), fullName);
+    }
+    else if (it.isProp())
+    {
+      m.insert(make_pair(fullName, Property(it)));
+    }
+    ++it;
+    // method object will be ignored...
+  }
 }
 // \mvIMPACT SDK Examples
 
+void MVCamera::saveCameraSettings(std::string path)
+{
 
-void MVCamera::saveCameraSettings( std::string path) {
-
-    cam_fi_->saveSetting(path, sfFile);
-    
-}
-
-void MVCamera::loadCameraSettings( std::string path ) {
-
-    cam_fi_->loadSetting(path, sfFile);
+  cam_fi_->saveSetting(path, sfFile);
 
 }
 
+void MVCamera::loadCameraSettings(std::string path)
+{
+
+  cam_fi_->loadSetting(path, sfFile);
+
+}
 

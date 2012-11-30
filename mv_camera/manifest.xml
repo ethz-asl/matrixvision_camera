@@ -16,6 +16,10 @@
   <depend package="nodelet"/>
   <depend package="tf"/>
   <depend package="mv_driver"/>
+  
+  <export>
+    <nodelet plugin="${prefix}/mv_camera_nodelet.xml"/>
+  </export>
 
 </package>
 
