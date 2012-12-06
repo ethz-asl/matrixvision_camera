@@ -153,7 +153,7 @@ int MVCamera::open(mv_camera::MVCameraConfig &newconfig)
 
   if (cam_ == NULL)
   {
-    if (newconfig.guid == "" || newconfig.guid.find("MATRIX_VISION_CAMERA_") == std::string::npos)
+    if (newconfig.guid == "" || newconfig.guid.find("MV_CAMERA_") == std::string::npos)
     {
       CAM_EXCEPT(mv_camera::Exception, "Could not find a camera");
     }
@@ -164,7 +164,7 @@ int MVCamera::open(mv_camera::MVCameraConfig &newconfig)
     return -1;
   }
 
-  device_id_ = "MATRIX_VISION_CAMERA_" + cam_->serial.read();
+  device_id_ = "MV_CAMERA_" + cam_->serial.read();
 
   cam_fi_.reset(new FunctionInterface(cam_));
   cam_stats_.reset(new Statistics(cam_));
