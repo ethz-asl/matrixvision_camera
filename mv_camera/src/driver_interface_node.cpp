@@ -91,7 +91,7 @@ int main(int argc, char **argv)
   cout << "Initialising ROS and service client side...\n";
 
   ros::NodeHandle n;
-  ros::ServiceClient client = n.serviceClient<mv_camera::PropertyMap>("/camera/pollPropertyList");
+  ros::ServiceClient client = n.serviceClient<mv_camera::PropertyMap>("poll_property_list");
   // create a listener
 //    ros::Subscriber sub = n.subscribe("/camera/image_raw", 1000, imageMessageCallback);
   // asynchronous spinning to save the images in the background

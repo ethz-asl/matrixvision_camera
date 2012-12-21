@@ -98,7 +98,7 @@ MVCameraDriver::MVCameraDriver(ros::NodeHandle priv_nh, ros::NodeHandle camera_n
         new image_transport::ImageTransport(camera_nh_)), image_pub_(it_->advertiseCamera("image_raw", 1))
 {
   // publish service:
-  serviceServer_ = camera_nh_.advertiseService("pollPropertyList", &MVCameraDriver::pollPropertyMapCallback, this);
+  serviceServer_ = camera_nh_.advertiseService("poll_property_list", &MVCameraDriver::pollPropertyMapCallback, this);
   continuousPoll_ = true;
 }
 
