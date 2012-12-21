@@ -1,0 +1,10 @@
+<stack>
+  <description brief="ROS driver for Matrix Vision cameras ">
+    This stack constains a ROS driver and driver wrapper for Matrix Vision cameras. Currently, mvBlueFOX and mvBlueCOUGAR cameras are supported.  
+  </description>
+  <author>Maintained by Markus Achtelik</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://www.ros.org/wiki/matrixvision_camera</url>
+  <depend stack="ros"/>
+</stack>
