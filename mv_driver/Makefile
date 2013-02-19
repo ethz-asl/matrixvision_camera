@@ -2,4 +2,4 @@ all:
 	./make.sh
 	
 clean:
-	rm -rf mvBlue* mvIMPACT* download
+	rm -rf mvBlue* mvGen* download
