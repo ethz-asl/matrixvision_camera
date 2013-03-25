@@ -19,6 +19,7 @@ ABI=ABI2
 
 LINKER_PATHS=$PACKAGE_DIR/linker_paths
 COMPILER_FLAGS=$PACKAGE_DIR/compile_flags
+ENV_VARS=$PACKAGE_DIR/envvars
 
 TARGET=$(uname -m)
 if [ "$TARGET" == "i686" ]; then
@@ -35,7 +36,7 @@ BLUEFOX_TARNAME=$BLUEFOX_NAME-$TARGET"_"$ABI-$BLUEFOX_VERSION
 
 
 # cleanup first
-rm -rf $BLUECOUGAR_NAME* $BLUEFOX_NAME* $API* tmp $LINKER_PATHS $COMPILER_FLAGS
+rm -rf $BLUECOUGAR_NAME* $BLUEFOX_NAME* $API* tmp $LINKER_PATHS $COMPILER_FLAGS $ENV_VARS
 rm -rf download
 
 #### download driver archives ####
@@ -66,6 +67,9 @@ rm -f libMvPropHandling*
 ln -fs libmvBlueCOUGAR.so.$VERSION libmvBlueCOUGAR.so
 ln -fs libmvTLIClientGigE.so.$VERSION libmvTLIClientGigE.so
 ln -fs libmvTLIClientGigE.so mvTLIClientGigE.cti
+ln -fs libmvGenTLConsumer.so.$VERSION libmvGenTLConsumer.so
+ln -fs libmvGenTLProducer.so.$VERSION libmvGenTLProducer.so
+ln -fs libmvPropHandling.so.$VERSION libmvPropHandling.so
 echo -L$PACKAGE_DIR/$BLUECOUGAR_NAME"_runtime/lib" >> $LINKER_PATHS
 
 #### mvImpact (device independent stuff) ####
@@ -106,6 +110,11 @@ echo -DGENICAM_ROOT=$PACKAGE_DIR/$BLUECOUGAR_NAME"_runtime"/GenICam >> $COMPILER
 echo -DGENICAM_ROOT_V2_3=$PACKAGE_DIR/$BLUECOUGAR_NAME"_runtime"/GenICam >> $COMPILER_FLAGS
 echo -DGENICAM_GENTL64_PATH=$PACKAGE_DIR/$BLUECOUGAR_NAME"_runtime"/lib >> $COMPILER_FLAGS
 echo -DGENICAM_LOG_CONFIG_V2_3=$PACKAGE_DIR/$BLUECOUGAR_NAME"_runtime"/GenICam/log/config-unix/DefaultLogging.properties >> $COMPILER_FLAGS
+
+echo export GENICAM_ROOT=$PACKAGE_DIR/$BLUECOUGAR_NAME"_runtime"/GenICam >> $ENV_VARS
+echo export GENICAM_ROOT_V2_3=$PACKAGE_DIR/$BLUECOUGAR_NAME"_runtime"/GenICam >> $ENV_VARS
+echo export GENICAM_GENTL64_PATH=$PACKAGE_DIR/$BLUECOUGAR_NAME"_runtime"/lib >> $ENV_VARS
+echo export GENICAM_LOG_CONFIG_V2_3=$PACKAGE_DIR/$BLUECOUGAR_NAME"_runtime"/GenICam/log/config-unix/DefaultLogging.properties >> $ENV_VARS
 
 
 #### bluefox runtime ####

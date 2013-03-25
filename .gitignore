@@ -12,6 +12,9 @@
 *.la
 *.a
 
+# Emacs!
+*~
+
 mv_camera/.cproject
 mv_camera/.project
 mv_camera/bin/
@@ -33,3 +36,6 @@ mv_driver/mvBlueFOX_runtime/
 mv_driver/mvBlueFOX_scripts/
 mv_driver/mvIMPACT_acquire/
 mv_camera/mvDebugFlags.mvd
+mv_driver/downloadandinstall
+mv_driver/envvars
+mv_driver/mvGenTL_Acquire_runtime/
