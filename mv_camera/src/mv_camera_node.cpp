@@ -49,7 +49,7 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "mv_camera_node");
   ros::NodeHandle node;
   ros::NodeHandle priv_nh("~");
-  ros::NodeHandle camera_nh("mv_camera");
+  ros::NodeHandle camera_nh("camera");
   mv_camera::MVCameraDriver dvr(priv_nh, camera_nh);
 
   dvr.setup();
