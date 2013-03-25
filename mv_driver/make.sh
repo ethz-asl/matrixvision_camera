@@ -36,6 +36,7 @@ BLUEFOX_TARNAME=$BLUEFOX_NAME-$TARGET"_"$ABI-$BLUEFOX_VERSION
 
 # cleanup first
 rm -rf $BLUECOUGAR_NAME* $BLUEFOX_NAME* $API* tmp $LINKER_PATHS $COMPILER_FLAGS
+rm -rf download
 
 #### download driver archives ####
 mkdir -p download
@@ -125,4 +126,7 @@ echo -L$PACKAGE_DIR/$BLUEFOX_NAME"_runtime/lib/"$TARGET >> $LINKER_PATHS
 
 #### clean up ####
 rm -rf $PACKAGE_DIR/tmp
+
+#### note down that this is done ####
+touch $PACKAGE_DIR/downloadandinstall
 
