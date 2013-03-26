@@ -33,6 +33,9 @@ set(DRIVER_SOURCES
   src/formats.cpp
   )
 
+
+rosbuild_add_executable(mv_camera_interface src/driver_interface_node.cpp)
+
 rosbuild_add_library(mv_camera_driver ${DRIVER_SOURCES})
 
 rosbuild_add_executable(mv_camera_node src/mv_camera_node.cpp )
@@ -44,4 +47,4 @@ target_link_libraries(mv_camera_nodelet mv_camera_driver)
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
-rosbuild_add_executable(mv_camera_interface src/driver_interface_node.cpp)
+
