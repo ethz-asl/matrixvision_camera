@@ -40,6 +40,7 @@
 
 #include "driver_mv_camera.h"
 #include "features.h"
+#include <boost/lexical_cast.hpp>
 
 /** @file
 
@@ -100,11 +101,15 @@ MVCameraDriver::MVCameraDriver(ros::NodeHandle priv_nh, ros::NodeHandle camera_n
   // publish service:
   serviceServer_ = camera_nh_.advertiseService("poll_property_list", &MVCameraDriver::pollPropertyMapCallback, this);
   continuousPoll_ = true;
+  processedParameterList_ = false;
 }
 
 MVCameraDriver::~MVCameraDriver()
 {
 }
+
+
+
 
 /** Close camera device
  *
@@ -279,52 +284,9 @@ bool MVCameraDriver::pollPropertyMapCallback(PropertyMap::Request &req, Property
     // catch exceptions
     try
     {
-      // find the property
-      // StringPropMap::const_iterator it = dev_->propertyMap_.find( req.identifier );
-      StringPropMap::const_iterator it = find_ignore_case(dev_->propertyMap_, req.identifier);
-      if (it == dev_->propertyMap_.end())
-      {
-        outputString = "Property + [" + req.identifier + "] not found!";
-        outputStatus = 0;
-      }
-      Property prop = it->second;
-
-      // save old value
-      string oldValue = prop.readS();
-
-      // set index and new parameter value
-      int valIndex = 0;
-      string index = "";    // currently ignored!
-      string param = req.value;
-
-      if (prop.isWriteable())
-      {
-        if (param.empty())
-        {
-          if (prop.valCount() > 1)
-          {
-            outputString +=
-                "--- Unexpected behaviour, multivalued field change! --- \n probably the wrong property was manipulated! \n";
-            outputStatus = 0;
-          }
-          prop.writeS(param, valIndex);
-        }
-        else
-        {
-          if (!index.empty())
-          {
-            valIndex = atoi(index.c_str());
-          }
-          prop.writeS(param, valIndex);
-        }
-      }
-      else
-      {
-        outputString += "Read-Only Property, value unchanged. \n";
-        outputStatus = 0;
-      }
-      string newValue = prop.readS();
-      outputString += "Old Value: " + oldValue + " \n New Value: " + newValue + "\n";
+        std::pair<int,std::string> rval = setProperty(req.identifier, req.value);
+        outputString += rval.second;
+        outputStatus = rval.first;
     }
     catch (const mvIMPACT::acquire::ImpactAcquireException& e)
     {
@@ -417,10 +379,116 @@ bool MVCameraDriver::pollPropertyMapCallback(PropertyMap::Request &req, Property
       outputStatus = 0;
     }
   }
+  else if (cmd = PropertyMap::Request::LOAD_PROPERTIES)
+  {
+      processParameterList();
+  }
 
   res.result = outputString;
   res.status = outputStatus;
   return true;
+}
+
+
+    void MVCameraDriver::processParameterList()
+    {
+        
+        int i = 0;
+        std::string pname = "mvparam" + boost::lexical_cast<std::string>(i);
+        std::string pval;
+        while(priv_nh_.getParam(pname, pval))
+        {
+            ROS_INFO_STREAM("Loading parameter " << pname);
+            
+            // Split the value into key/value by :
+            size_t split = pval.find_first_of(':');
+            if(split == std::string::npos || split == 0 || split == pval.size() -1)
+            {
+                ROS_WARN_STREAM("Parameter " << pname << " was not correctly formatted. Got: \"" << pval << "\", wanted key:value");
+            }
+            else
+            {
+                std::string key = pval.substr(0,split);
+                std::string value = pval.substr(split+1);
+                ROS_INFO_STREAM("Processing " << key << ":" << value);
+                try{
+                    std::pair<int, std::string> rval = setProperty(key,value);
+                    if(rval.first == 1)
+                    {
+                        // success
+                        ROS_INFO_STREAM("Processed " << pval << ", " << rval.second);
+                    }
+                    else
+                    {
+                        // fail
+                        ROS_WARN_STREAM("Error processing " << pval << ", " << rval.second);
+                    }
+                } 
+                catch (const mvIMPACT::acquire::ImpactAcquireException& e)
+                {
+                    ROS_ERROR_STREAM("Error processing " << key << ":" << value << ", " << e.getErrorString() << ", error code: " << e.getErrorCodeAsString());
+                }
+
+            }
+            pname = "mvparam" + boost::lexical_cast<std::string>(++i);
+        }
+
+    }
+
+
+std::pair<int,std::string> MVCameraDriver::setProperty(const std::string & key, const std::string & value)
+{
+          // find the property
+      // StringPropMap::const_iterator it = dev_->propertyMap_.find( req.identifier );
+      StringPropMap::const_iterator it = find_ignore_case(dev_->propertyMap_, key);
+      if (it == dev_->propertyMap_.end())
+      {       
+          //outputString = "Property + [" + key + "] not found!";
+          //outputStatus = 0;
+          // \todo Something better.
+          ROS_ERROR_STREAM("Property + [" << key << "] not found!");
+          return std::make_pair(0,std::string("Property + [" + key + "] not found!"));
+      }
+      Property prop = it->second;
+
+      // save old value
+      string oldValue = prop.readS();
+
+      // set index and new parameter value
+      int valIndex = 0;
+      string index = "";    // currently ignored!
+      string param = value;
+
+      if (prop.isWriteable())
+      {
+        if (param.empty())
+        {
+          if (prop.valCount() > 1)
+          {
+              return std::make_pair(0, std::string("--- Unexpected behaviour, multivalued field change! --- \n probably the wrong property was manipulated! \n"));
+              //outputString +=
+              //  "--- Unexpected behaviour, multivalued field change! --- \n probably the wrong property was manipulated! \n";
+              //outputStatus = 0;
+          }
+          prop.writeS(param, valIndex);
+        }
+        else
+        {
+          if (!index.empty())
+          {
+            valIndex = atoi(index.c_str());
+          }
+          prop.writeS(param, valIndex);
+        }
+      }
+      else
+      {
+          // outputString += "Read-Only Property, value unchanged. \n";
+          // outputStatus = 0;
+          return std::make_pair(0,std::string("Read-Only Property, value unchanged. \n"));
+      }
+      string newValue = prop.readS();
+      return std::make_pair(1, std::string("Old Value: " + oldValue + " \n New Value: " + newValue + "\n"));
 }
 
 /** Open the camera device.
@@ -474,8 +542,16 @@ bool MVCameraDriver::openCamera(Config &newconfig)
 
   // ComponentList cl =  dev_->deviceDriverFeatureList;
 
+  if(!processedParameterList_)
+  {
+      processParameterList();
+      processedParameterList_ = true;
+  }
+
   return success;
 }
+
+
 
 /** device poll */
 void MVCameraDriver::poll(void)

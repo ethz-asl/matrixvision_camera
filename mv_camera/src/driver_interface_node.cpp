@@ -187,14 +187,14 @@ int main(int argc, char **argv)
     /// SAVE
     else if (cmd == "save")
     {
-      srv.request.command = Request::LOAD_SETTINGS;
+      srv.request.command = Request::SAVE_SETTINGS;
       srv.request.identifier = getInputForQuestion("File Path:");
       sendAndPrintResult(client, srv);
     }
     /// LOAD
     else if (cmd == "load")
     {
-      srv.request.command = Request::SAVE_SETTINGS;
+      srv.request.command = Request::LOAD_SETTINGS;
       srv.request.identifier = getInputForQuestion("File Path:");
       sendAndPrintResult(client, srv);
     }

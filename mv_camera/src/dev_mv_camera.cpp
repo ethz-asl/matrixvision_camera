@@ -420,14 +420,15 @@ void MVCamera::populatePropertyMap(StringPropMap& m, ComponentIterator it, const
 void MVCamera::saveCameraSettings(std::string path)
 {
 
-  cam_fi_->saveSetting(path, sfFile);
-
+    ROS_INFO_STREAM("Saving camera parameters to " << path);
+    int rval = cam_fi_->saveSetting(path, mvIMPACT::acquire::TStorageFlag(sfFile | sfIgnoreBasicData));
+    ROS_INFO_STREAM("Return code: " << rval);
 }
 
 void MVCamera::loadCameraSettings(std::string path)
 {
-
-  cam_fi_->loadSetting(path, sfFile);
-
+    ROS_INFO_STREAM("Loading camera parameters from " << path);
+    int rval = cam_fi_->loadSetting(path, mvIMPACT::acquire::TStorageFlag(sfFile | sfIgnoreBasicData));//sfFile | sfIgnoreBasicData);
+    ROS_INFO_STREAM("Return code: " << rval);
 }
 
