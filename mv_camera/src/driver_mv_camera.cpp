@@ -379,7 +379,7 @@ bool MVCameraDriver::pollPropertyMapCallback(PropertyMap::Request &req, Property
       outputStatus = 0;
     }
   }
-  else if (cmd = PropertyMap::Request::LOAD_PROPERTIES)
+  else if (cmd == PropertyMap::Request::LOAD_PROPERTIES)
   {
       processParameterList();
   }
@@ -542,11 +542,6 @@ bool MVCameraDriver::openCamera(Config &newconfig)
 
   // ComponentList cl =  dev_->deviceDriverFeatureList;
 
-  if(!processedParameterList_)
-  {
-      processParameterList();
-      processedParameterList_ = true;
-  }
 
   return success;
 }
@@ -761,6 +756,15 @@ void MVCameraDriver::reconfig(MVCameraConfig &newconfig, uint32_t level)
 
   ROS_DEBUG_STREAM(
       "[" << camera_name_ << "] reconfigured: frame_id " << newconfig.frame_id << ", camera_info_url " << newconfig.camera_info_url);
+
+  ROS_INFO_STREAM("in dynamic reconfigure: " << processedParameterList_);
+  if(!processedParameterList_)
+  {
+      processParameterList();
+      processedParameterList_ = true;
+  }
+
+
 }
 
 /** driver initialization
