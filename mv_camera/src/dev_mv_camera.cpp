@@ -63,7 +63,7 @@ using namespace mvIMPACT::acquire;
 using namespace std;
 
 MVCamera::MVCamera() :
-    use_ros_time_(true), cam_(NULL)
+    use_ros_time_(true), embed_image_info_(true), cam_(NULL)
 {
   rosTimeOffset_ = -1;
 
@@ -189,7 +189,7 @@ int MVCamera::open(mv_camera::MVCameraConfig &newconfig)
   }
 
   use_ros_time_ = newconfig.use_ros_time;
-
+  embed_image_info_ = newconfig.embed_image_info;
   //////////////////////////////////////////////////////////////
   // initialize feature settings
   //////////////////////////////////////////////////////////////
@@ -216,6 +216,20 @@ int MVCamera::close()
 
   return 0;
 }
+
+template<typename T>
+size_t writeToBuffer(std::vector<boost::uint8_t> & data, size_t offset, const T & type)
+{
+    const T * ptr = &type;
+    const boost::uint8_t * cp = reinterpret_cast< const boost::uint8_t * >(ptr);
+    for(size_t i = 0; i < sizeof(T) && offset < data.size(); ++i)
+    {
+        data[offset++] = cp[i];
+    }
+
+    return offset;
+}
+
 
 void MVCamera::fillSensorMsgs(sensor_msgs::Image& image, const Request* req, ros::Time time_now)
 {
@@ -252,7 +266,36 @@ void MVCamera::fillSensorMsgs(sensor_msgs::Image& image, const Request* req, ros
     image.header.stamp = ros::Time(current_image_time);
   }
 
+  if(embed_image_info_)
+  {
+      //ROS_INFO_STREAM("Embedding info");
+      CameraSettingsBlueDevice bfs(cam_);
+           
+      // http://www.matrix-vision.com/manuals/SDK_CPP/classmvIMPACT_1_1acquire_1_1Request.html
+      const boost::uint16_t magic = 0xA8;
+      int at = 0;
+      boost::uint64_t ts = req->infoTimeStamp_us.read();
+      //boost::uint32_t es = req->infoExposeStart_us.read();
+      boost::uint32_t et = req->infoExposeTime_us.read();
+      boost::uint64_t nr = req->infoFrameNr.read();
+      //float gain = req->infoGain_dB.read();
+      boost::uint64_t pclock = bfs.pixelClock_KHz.read();
+      //ROS_INFO_STREAM("ts: " << ts << ", exp start: " << es << ", exp: " << et << ", num: " << nr << ", gain: " << gain << ", pclock: " << pclock);
+      
+      size_t offset = 0;
+      offset = writeToBuffer(image.data, offset, magic);
+      offset = writeToBuffer(image.data, offset, ts);
+      //offset = writeToBuffer(image.data, offset, es);
+      offset = writeToBuffer(image.data, offset, et);
+      offset = writeToBuffer(image.data, offset, nr);
+      //offset = writeToBuffer(image.data, offset, gain);
+      offset = writeToBuffer(image.data, offset, pclock);
+
+      //ROS_INFO_STREAM("Embedding complete");
+  }
+
 }
+
 
 // requests and saves a single image
 void MVCamera::readSingleImage(sensor_msgs::Image& image)
@@ -420,14 +463,15 @@ void MVCamera::populatePropertyMap(StringPropMap& m, ComponentIterator it, const
 void MVCamera::saveCameraSettings(std::string path)
 {
 
-  cam_fi_->saveSetting(path, sfFile);
-
+    ROS_INFO_STREAM("Saving camera parameters to " << path);
+    int rval = cam_fi_->saveSetting(path, mvIMPACT::acquire::TStorageFlag(sfFile | sfIgnoreBasicData));
+    ROS_INFO_STREAM("Return code: " << rval);
 }
 
 void MVCamera::loadCameraSettings(std::string path)
 {
-
-  cam_fi_->loadSetting(path, sfFile);
-
+    ROS_INFO_STREAM("Loading camera parameters from " << path);
+    int rval = cam_fi_->loadSetting(path, mvIMPACT::acquire::TStorageFlag(sfFile | sfIgnoreBasicData));//sfFile | sfIgnoreBasicData);
+    ROS_INFO_STREAM("Return code: " << rval);
 }
 
