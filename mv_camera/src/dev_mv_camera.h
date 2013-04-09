@@ -101,6 +101,8 @@ public:
 
 private:
   bool use_ros_time_;
+  bool embed_image_info_;
+
 
   int64_t rosTimeOffset_; // time offset between camera and ros time (as long as it is -1 => not initialised)
 

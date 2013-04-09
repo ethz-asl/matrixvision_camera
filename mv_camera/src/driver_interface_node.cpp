@@ -47,8 +47,11 @@ int sendAndPrintResult(ros::ServiceClient client, mv_camera::PropertyMap srv)
 string getInputForQuestion(string question)
 {
   cout << question << endl;
+  char buffer[4096];
   string out;
-  cin >> out;
+  cin.getline(buffer,4096);
+  out = buffer;
+
   return out;
 }
 
@@ -99,7 +102,7 @@ int main(int argc, char **argv)
   spinner.start();
 
   cout << "Done.\n";
-
+  cout << "Type \"help\" to get a list of commands\n";
   string cmd;
 
   // the main loop:
@@ -113,9 +116,12 @@ int main(int argc, char **argv)
     srv.request.identifier = "";
     srv.request.value = "";
 
+    std::cout << "> ";
     // read command:
-    cin >> cmd;
-
+    char buffer[4096];
+    cin.getline(buffer,4096);
+    //cin >> cmd;
+    cmd = buffer;
     /// QUIT
     if (cmd == "quit" || cmd == "q")
     {
@@ -127,6 +133,8 @@ int main(int argc, char **argv)
     if (!client.exists())
     {
       cout << "Service currently unavailable!" << endl;
+      cout << "Trying to connect to: " << n.resolveName("poll_property_list", true) << std::endl;
+      client = n.serviceClient<mv_camera::PropertyMap>(n.resolveName("poll_property_list", true));
       continue;
     }
 
@@ -179,14 +187,14 @@ int main(int argc, char **argv)
     /// SAVE
     else if (cmd == "save")
     {
-      srv.request.command = Request::LOAD_SETTINGS;
+      srv.request.command = Request::SAVE_SETTINGS;
       srv.request.identifier = getInputForQuestion("File Path:");
       sendAndPrintResult(client, srv);
     }
     /// LOAD
     else if (cmd == "load")
     {
-      srv.request.command = Request::SAVE_SETTINGS;
+      srv.request.command = Request::LOAD_SETTINGS;
       srv.request.identifier = getInputForQuestion("File Path:");
       sendAndPrintResult(client, srv);
     }
@@ -238,6 +246,7 @@ int main(int argc, char **argv)
       cout << "\t restart: close and reopen device \n";
       cout << "\t close: close device \n";
       cout << "\t open: open device \n";
+      cout << "\t find: find a parameter by substring \n";
     }
 
     cout << "\n------\n";

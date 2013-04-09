@@ -71,6 +71,8 @@ public:
   bool pollPropertyMapCallback(PropertyMap::Request &req, PropertyMap::Response &res);
   std::string getPropertyData(const mvIMPACT::acquire::Property& prop);
 
+  std::pair<int,std::string> setProperty(const std::string & key, const std::string & value);
+
 private:
 
   // private methods
@@ -79,6 +81,8 @@ private:
   void publish(const sensor_msgs::ImagePtr &image);
   bool read(sensor_msgs::ImagePtr &image);
   void reconfig(MVCameraConfig &newconfig, uint32_t level);
+
+  void processParameterList();
 
   /** Non-recursive mutex for serializing callbacks with device polling. */
   boost::mutex mutex_;
@@ -109,6 +113,8 @@ private:
   bool continuousPoll_;
 
   ros::ServiceServer serviceServer_;
+
+  bool processedParameterList_;
 
 };
 // end class MVCameraDriver
