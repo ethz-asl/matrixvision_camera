@@ -273,7 +273,7 @@ void MVCamera::fillSensorMsgs(sensor_msgs::Image& image, const Request* req, ros
            
       // http://www.matrix-vision.com/manuals/SDK_CPP/classmvIMPACT_1_1acquire_1_1Request.html
       const boost::uint16_t magic = 0xA8;
-      int at = 0;
+      
       boost::uint64_t ts = req->infoTimeStamp_us.read();
       //boost::uint32_t es = req->infoExposeStart_us.read();
       boost::uint32_t et = req->infoExposeTime_us.read();

@@ -14,8 +14,8 @@ BLUEFOX_URL="http://n.ethz.ch/~acmarkus/download/matrixvision_driver"
 
 API=mvIMPACT_acquire
 
-VERSION=2.5.7
-BLUEFOX_VERSION=2.5.7
+VERSION=2.5.2
+BLUEFOX_VERSION=2.5.4
 ABI=ABI2
 
 LINKER_PATHS=$PACKAGE_DIR/linker_paths
