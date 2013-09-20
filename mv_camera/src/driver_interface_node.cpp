@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <string>
 //#include "cv.h"
-#include <mv_camera/PropertyMap_FIX.h>
+#include <mv_camera/PropertyMap.h>
 
 //#include <cv_bridge/cv_bridge.h>
 //#include <opencv2/imgproc/imgproc.hpp>

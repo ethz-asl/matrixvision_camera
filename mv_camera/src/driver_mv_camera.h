@@ -45,7 +45,7 @@
 
 #include "dev_mv_camera.h"
 #include <mv_camera/MVCameraConfig.h>
-#include <mv_camera/PropertyMap_FIX.h>
+#include <mv_camera/PropertyMap.h>
 
 /** @file
 
