@@ -33,6 +33,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
+#include <limits>
 #include <cmath>
 #include "features.h"
 #include "formats.h"
@@ -436,21 +437,25 @@ bool Features::setPixelClock(const double & px_clock_suggested, double * px_cloc
   CameraSettingsBlueDevice settings(cam_);
   PropertyICameraPixelClock & pixel_clock = settings.pixelClock_KHz;
   int pixel_clock_kHz = MHzToKHz(px_clock_suggested);
-  TCameraPixelClock closest_pixel_clock = cpcStandard;
+  TCameraPixelClock closest_pixel_clock = pixel_clock.getTranslationDictValue(0); //cpcStandard;
 
   double retval = oldconfig_.pixel_clock;
   bool success = false;
 
+// S. Weiss (stephan.weiss@ieee.org) {
+  int dist = std::numeric_limits<int>::max();
   for (unsigned int i = 0; i < pixel_clock.dictSize(); i++)
   {
-    const TCameraPixelClock & px_clk = pixel_clock.getTranslationDictValue(i);
-    int diff1 = abs(px_clk - pixel_clock_kHz);
-    int diff2 = abs(px_clk - closest_pixel_clock);
-    if (diff1 < diff2)
+    int curdist = abs(pixel_clock.getTranslationDictValue(i)-pixel_clock_kHz);
+    if ((curdist>dist))
     {
-      closest_pixel_clock = px_clk;
+	closest_pixel_clock = pixel_clock.getTranslationDictValue(i-1);
+	break;
     }
+    closest_pixel_clock = pixel_clock.getTranslationDictValue(i);
+    dist=curdist;
   }
+// }
 
   if (closest_pixel_clock != 0)
   {

@@ -13,6 +13,7 @@ BLUEFOX_URL="http://n.ethz.ch/~acmarkus/download/matrixvision_driver"
 #GENTL_FILE=""
 
 API=mvIMPACT_acquire
+
 VERSION=2.5.2
 BLUEFOX_VERSION=2.5.4
 ABI=ABI2
