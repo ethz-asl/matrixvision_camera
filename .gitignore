@@ -28,9 +28,9 @@ mv_camera/src/mv_camera/
 mv_camera/srv_gen/
 mv_driver/.cproject
 mv_driver/.project
-mv_driver/compile_flags
+#mv_driver/compile_flags
 mv_driver/download/
-mv_driver/linker_paths
+#mv_driver/linker_paths
 mv_driver/mvBlueCOUGAR_runtime/
 mv_driver/mvBlueFOX_runtime/
 mv_driver/mvBlueFOX_scripts/

@@ -1,5 +1,5 @@
 #!/bin/bash
-
+exit 0
 set -e
 
 PACKAGE_DIR=$(rospack find mv_driver)

@@ -1,0 +1,4 @@
+-I/home/omaris/ros_aslam/matrixvision_camera/mv_driver/mvIMPACT_acquire-arm-2.5.4
+-I/home/omaris/ros_aslam/matrixvision_camera/mv_driver/mvIMPACT_acquire-arm-2.5.4/mvDeviceManager/Include
+-I/home/odroid/rosbuild_ws/matrixvision_camera/mv_driver/mvIMPACT_acquire-arm-2.5.4
+-I/home/odroid/rosbuild_ws/matrixvision_camera/mv_driver/mvIMPACT_acquire-arm-2.5.4/mvDeviceManager/Include
